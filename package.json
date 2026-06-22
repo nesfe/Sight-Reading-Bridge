@@ -1,0 +1,92 @@
+{
+  "name": "sight-reading-bridge",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Progressive Electron piano sight-reading trainer with Web MIDI support.",
+  "author": {
+    "name": "Sight Reading Bridge",
+    "email": "maintainers@sightreadingbridge.local"
+  },
+  "homepage": "https://github.com/nesfe/Sight-Reading-Bridge",
+  "desktopName": "Sight Reading Bridge",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\"",
+    "dev:renderer": "vite --host 0.0.0.0",
+    "dev:electron": "wait-on http://127.0.0.1:5173 && NODE_ENV=development electron electron/main.cjs",
+    "build": "tsc -b && vite build",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "electron": "electron electron/main.cjs",
+    "dist": "npm run lint && npm run test && npm run build && electron-builder",
+    "dist:linux": "npm run dist -- --linux AppImage deb rpm"
+  },
+  "dependencies": {
+    "lucide-react": "^1.21.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.12.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "concurrently": "^10.0.3",
+    "electron": "^42.4.1",
+    "electron-builder": "^26.15.3",
+    "eslint": "^10.3.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.6.0",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.59.2",
+    "vite": "^8.0.12",
+    "vitest": "^4.1.9",
+    "wait-on": "^9.0.10"
+  },
+  "build": {
+    "appId": "com.sightreadingbridge.desktop",
+    "productName": "Sight Reading Bridge",
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "buildResources": "build",
+      "output": "release"
+    },
+    "mac": {
+      "category": "public.app-category.education",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "deb": {
+      "compression": "gz"
+    },
+    "rpm": {
+      "compression": "gzip"
+    },
+    "linux": {
+      "category": "Education",
+      "maintainer": "Sight Reading Bridge <maintainers@sightreadingbridge.local>",
+      "syncDesktopName": true,
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm"
+      ]
+    }
+  }
+}
