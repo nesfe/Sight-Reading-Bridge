@@ -8,6 +8,7 @@ import {
   Keyboard,
   Layers,
   Music2,
+  MousePointer2,
   Piano,
   Play,
   RotateCcw,
@@ -32,7 +33,7 @@ import './App.css'
 
 type View = 'trainer' | 'method' | 'progress'
 type Axis = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
-type ExerciseType = 'flash-notes' | 'eye-etudes' | 'chunk-reader' | 'ahead-reading'
+type ExerciseType = 'note-key-map' | 'static-recognition' | 'guided-motion' | 'ahead-reading'
 
 type Scaffold = Record<Axis, number>
 
@@ -85,22 +86,26 @@ const AXIS_LABELS: Record<Axis, string> = {
   G: 'Rhythm detail',
 }
 
-const EXERCISES: Record<ExerciseType, { title: string; description: string }> = {
-  'flash-notes': {
-    title: 'Flash Notes',
-    description: 'Static recognition with latency tracking.',
+const EXERCISES: Record<ExerciseType, { title: string; description: string; task: string }> = {
+  'note-key-map': {
+    title: 'Step 1: Staff to key map',
+    description: 'A single note is pinned to the exact piano key it belongs to.',
+    task: 'Press the highlighted key. The point is to see the bridge, not to chase motion.',
   },
-  'eye-etudes': {
-    title: 'Eye Etudes',
-    description: 'Controlled non-melodic patterns that force real reading.',
+  'static-recognition': {
+    title: 'Step 2: Static recognition',
+    description: 'One note at a time, labels still visible, speed measured quietly.',
+    task: 'Read the note position, then play the matching key.',
   },
-  'chunk-reader': {
-    title: 'Chunk Reader',
-    description: 'Steps, skips, repeats, triads, and short scalar fragments.',
+  'guided-motion': {
+    title: 'Step 3: Guided motion',
+    description: 'Short phrases move only after the map is clear.',
+    task: 'Follow the current note at the now line.',
   },
   'ahead-reading': {
-    title: 'Ahead Reading',
+    title: 'Step 4: Ahead reading',
     description: 'Curtain mode for training eye-hand span.',
+    task: 'Keep your eyes one note ahead while the current note reaches the line.',
   },
 }
 
@@ -127,24 +132,31 @@ function buildEtude(seed = 1): TrainingNote[] {
 
 function App() {
   const [view, setView] = useState<View>('trainer')
-  const [exercise, setExercise] = useState<ExerciseType>('eye-etudes')
+  const [exercise, setExercise] = useState<ExerciseType>('note-key-map')
   const [scaffold, setScaffold] = useState<Scaffold>(DEFAULT_SCAFFOLD)
   const [now, setNow] = useState(0)
-  const [running, setRunning] = useState(true)
+  const [running, setRunning] = useState(false)
   const [activeMidi, setActiveMidi] = useState<number | null>(null)
   const [attempts, setAttempts] = useState<Attempt[]>([])
+  const [targetIndex, setTargetIndex] = useState(0)
   const [midiStatus, setMidiStatus] = useState(() =>
     typeof navigator !== 'undefined' && 'requestMIDIAccess' in navigator
       ? 'MIDI waiting for permission'
       : 'Web MIDI unavailable',
   )
   const startRef = useRef(0)
+  const targetStartedAtRef = useRef(0)
   const lastTargetRef = useRef<string | null>(null)
 
   const notes = useMemo(() => buildEtude(3), [])
   const target = useMemo(() => {
+    if (exercise === 'note-key-map' || exercise === 'static-recognition') {
+      return notes[targetIndex % notes.length]
+    }
     return notes.find((note) => Math.abs(note.onset - now) < 0.44) ?? notes.find((note) => note.onset > now) ?? notes[0]
-  }, [notes, now])
+  }, [exercise, notes, now, targetIndex])
+  const targetPitch = stepToPitch(target.step)
+  const lastAttempt = attempts.at(-1)
 
   const accuracy = attempts.length
     ? Math.round((attempts.filter((attempt) => attempt.correct).length / attempts.length) * 100)
@@ -217,13 +229,18 @@ function App() {
     window.setTimeout(() => setActiveMidi(null), 160)
     if (!pitch || !target) return
 
-    const expected = stepToPitch(target.step).midi
-    const latencyMs = Math.round(Math.abs(target.onset - now) * 1000)
+    const expected = targetPitch.midi
+    if (!targetStartedAtRef.current) targetStartedAtRef.current = performance.now()
+    const latencyMs =
+      exercise === 'note-key-map' || exercise === 'static-recognition'
+        ? Math.round(performance.now() - targetStartedAtRef.current)
+        : Math.round(Math.abs(target.onset - now) * 1000)
+    const correct = midi === expected
     setAttempts((current) => [
       ...current.slice(-119),
       {
         actualMidi: midi,
-        correct: midi === expected,
+        correct,
         expectedMidi: expected,
         latencyMs,
         step: target.step,
@@ -232,16 +249,35 @@ function App() {
     ])
 
     if (target.id !== lastTargetRef.current) {
-      setScaffold((current) => adaptScaffold(current, midi === expected, latencyMs))
+      setScaffold((current) => adaptScaffold(current, correct, latencyMs))
       lastTargetRef.current = target.id
+    }
+
+    if (correct && (exercise === 'note-key-map' || exercise === 'static-recognition')) {
+      window.setTimeout(() => {
+        setTargetIndex((index) => index + 1)
+        targetStartedAtRef.current = performance.now()
+        lastTargetRef.current = null
+      }, 260)
     }
   }
 
   function resetSession() {
     startRef.current = performance.now()
+    targetStartedAtRef.current = performance.now()
     setNow(0)
     setAttempts([])
+    setTargetIndex(0)
     setScaffold(DEFAULT_SCAFFOLD)
+    lastTargetRef.current = null
+  }
+
+  function changeExercise(nextExercise: ExerciseType) {
+    setExercise(nextExercise)
+    setRunning(nextExercise === 'guided-motion' || nextExercise === 'ahead-reading')
+    setNow(0)
+    setTargetIndex(0)
+    targetStartedAtRef.current = performance.now()
     lastTargetRef.current = null
   }
 
@@ -277,7 +313,7 @@ function App() {
           <span className="eyebrow">Exercise</span>
           <div className="segmented vertical">
             {(Object.keys(EXERCISES) as ExerciseType[]).map((key) => (
-              <button className={exercise === key ? 'active' : ''} key={key} onClick={() => setExercise(key)}>
+              <button className={exercise === key ? 'active' : ''} key={key} onClick={() => changeExercise(key)}>
                 <Layers size={16} /> {EXERCISES[key].title}
               </button>
             ))}
@@ -295,7 +331,7 @@ function App() {
           <div>
             <span className="eyebrow">Method-first prototype</span>
             <h1>{view === 'trainer' ? EXERCISES[exercise].title : view === 'method' ? 'Scaffolding vector' : 'Session metrics'}</h1>
-            <p>{view === 'trainer' ? EXERCISES[exercise].description : 'Independent axes replace fixed Soft Mozart-style modes.'}</p>
+            <p>{view === 'trainer' ? EXERCISES[exercise].task : 'Independent axes replace fixed Soft Mozart-style modes.'}</p>
           </div>
           <div className="topbar-actions">
             <button className="icon-button" onClick={() => setRunning((value) => !value)} title="Play or pause">
@@ -317,14 +353,17 @@ function App() {
                 now={now}
                 onVirtualKey={handleNoteInput}
                 scaffold={scaffold}
-                targetId={target?.id}
+                targetId={target.id}
               />
             </section>
             <ControlRail
               accuracy={accuracy}
               averageLatency={averageLatency}
+              exercise={exercise}
+              lastAttempt={lastAttempt}
               scaffold={scaffold}
               setScaffold={setScaffold}
+              targetPitch={targetPitch}
               total={attempts.length}
             />
           </div>
@@ -363,6 +402,8 @@ function GrandStaffTrainer({
   const keyboardTop = 532
   const keyboardHeight = 92
   const showHorizontal = scaffold.A < 0.26
+  const moving = exercise === 'guided-motion' || exercise === 'ahead-reading'
+  const targetNote = notes.find((note) => note.id === targetId) ?? notes[0]
 
   if (showHorizontal) {
     return <HorizontalScore notes={notes} scaffold={scaffold} />
@@ -402,21 +443,27 @@ function GrandStaffTrainer({
           </>
         )}
 
-        {exercise === 'ahead-reading' && (
+        {exercise === 'ahead-reading' && moving && (
           <rect className="reading-curtain" x="0" y={nowLineY - 88} width={width} height="76" />
         )}
 
-        {notes.map((note) => {
+        {(moving ? notes : [targetNote]).map((note) => {
           const x = whiteKeyCenterX(note.step, KEYBOARD)
-          const y = nowLineY - (note.onset - now) * pxPerSecond
+          const y = moving ? nowLineY - (note.onset - now) * pxPerSecond : 260
           const visible = y > 28 && y < keyboardTop - 14
           if (!visible) return null
           const pitch = stepToPitch(note.step)
           const isTarget = note.id === targetId
           const isLineNote = isLine(note.step)
           return (
-            <g className={`falling-note ${isTarget ? 'target' : ''}`} key={note.id}>
-              {note.duration > 0.58 && scaffold.G > 0.25 && (
+            <g className={`training-note ${isTarget ? 'target' : ''}`} key={note.id}>
+              {!moving && (
+                <>
+                  <line className="key-bridge" x1={x} x2={x} y1={y + 16} y2={keyboardTop - 6} />
+                  <circle className="target-ring" cx={x} cy={keyboardTop - 20} r="13" />
+                </>
+              )}
+              {moving && note.duration > 0.58 && scaffold.G > 0.25 && (
                 <line className="duration-tail" x1={x} x2={x} y1={y} y2={y - note.duration * 54} />
               )}
               {Math.abs(note.step) <= 1 && (
@@ -443,8 +490,18 @@ function GrandStaffTrainer({
           )
         })}
 
-        <line className="now-line" x1="24" x2={width - 24} y1={nowLineY} y2={nowLineY} />
-        <text className="now-label" x="30" y={nowLineY - 10}>now</text>
+        {moving ? (
+          <>
+            <line className="now-line" x1="24" x2={width - 24} y1={nowLineY} y2={nowLineY} />
+            <text className="now-label" x="30" y={nowLineY - 10}>now</text>
+          </>
+        ) : (
+          <g className="static-task-card">
+            <rect x="28" y="104" width="236" height="86" rx="8" />
+            <text x="46" y="132">Current task</text>
+            <text className="static-task-main" x="46" y="162">{staticTaskLabel(targetNote.step)}</text>
+          </g>
+        )}
 
         <KeyboardSvg
           activeMidi={activeMidi}
@@ -452,7 +509,7 @@ function GrandStaffTrainer({
           keyboardTop={keyboardTop}
           onVirtualKey={onVirtualKey}
           scaffold={scaffold}
-          targetStep={notes.find((note) => note.id === targetId)?.step}
+          targetStep={targetNote.step}
         />
       </svg>
     </div>
@@ -568,18 +625,39 @@ function TrebleBassZones({ width, height, scaffold }: { width: number; height: n
 function ControlRail({
   accuracy,
   averageLatency,
+  exercise,
+  lastAttempt,
   scaffold,
   setScaffold,
+  targetPitch,
   total,
 }: {
   accuracy: number
   averageLatency: number
+  exercise: ExerciseType
+  lastAttempt?: Attempt
   scaffold: Scaffold
   setScaffold: Dispatch<SetStateAction<Scaffold>>
+  targetPitch: ReturnType<typeof stepToPitch>
   total: number
 }) {
+  const actualPitch = lastAttempt ? midiToPitch(lastAttempt.actualMidi) : null
   return (
     <aside className="control-column">
+      <section className="panel lesson-card">
+        <span className="eyebrow">Now</span>
+        <strong>{targetPitch.letter}{targetPitch.octave} / {SOLFEGE[targetPitch.letter]}</strong>
+        <p>{EXERCISES[exercise].description}</p>
+        <div className="expected-row">
+          <MousePointer2 size={16} />
+          <span>Target key: {targetPitch.letter}{targetPitch.octave}</span>
+        </div>
+        {lastAttempt && (
+          <div className={`answer-state ${lastAttempt.correct ? 'good' : 'miss'}`}>
+            {lastAttempt.correct ? 'Correct' : `Expected ${targetPitch.letter}${targetPitch.octave}, got ${actualPitch ? `${actualPitch.letter}${actualPitch.octave}` : 'a black key'}`}
+          </div>
+        )}
+      </section>
       <section className="metrics-grid">
         <Metric icon={Target} label="Accuracy" value={`${accuracy}%`} />
         <Metric icon={Gauge} label="Latency" value={averageLatency ? `${averageLatency} ms` : 'fresh'} />
@@ -695,6 +773,11 @@ function lineNumber(step: number) {
   if (TREBLE_LINE_STEPS.includes(step)) return String(TREBLE_LINE_STEPS.indexOf(step) + 1)
   if (BASS_LINE_STEPS.includes(step)) return String(BASS_LINE_STEPS.length - BASS_LINE_STEPS.indexOf(step))
   return ''
+}
+
+function staticTaskLabel(step: number) {
+  const pitch = stepToPitch(step)
+  return `Play ${pitch.letter}${pitch.octave} / ${SOLFEGE[pitch.letter]}`
 }
 
 function adaptScaffold(current: Scaffold, correct: boolean, latencyMs: number): Scaffold {

@@ -275,7 +275,40 @@ button {
   font-weight: 700;
 }
 
-.falling-note {
+.key-bridge {
+  stroke: #1f6feb;
+  stroke-dasharray: 7 7;
+  stroke-linecap: round;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.target-ring {
+  fill: none;
+  stroke: #1f6feb;
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.static-task-card rect {
+  fill: #ffffff;
+  stroke: #cbd8e7;
+  stroke-width: 1;
+}
+
+.static-task-card text {
+  fill: #64748b;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.static-task-card .static-task-main {
+  fill: #0f172a;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.training-note {
   transition: opacity 0.12s ease;
 }
 
@@ -384,6 +417,53 @@ button {
   display: grid;
   align-content: start;
   gap: 16px;
+}
+
+.lesson-card {
+  display: grid;
+  gap: 12px;
+}
+
+.lesson-card strong {
+  color: var(--text-strong);
+  font-size: 30px;
+  line-height: 1;
+}
+
+.lesson-card p {
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.expected-row {
+  border: 1px solid #d9e5f2;
+  background: #f7fbff;
+  border-radius: 8px;
+  color: #25496f;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 10px;
+  font-weight: 700;
+}
+
+.answer-state {
+  border-radius: 8px;
+  font-weight: 800;
+  min-height: 38px;
+  padding: 9px 10px;
+}
+
+.answer-state.good {
+  background: #eaf8f1;
+  color: #13744d;
+}
+
+.answer-state.miss {
+  background: #fff0f1;
+  color: #a32031;
 }
 
 .metrics-grid {
