@@ -1,36 +1,45 @@
 {
   "name": "sight-reading-bridge",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Progressive Electron piano sight-reading trainer with Web MIDI support.",
   "author": {
-    "name": "Sight Reading Bridge",
-    "email": "maintainers@sightreadingbridge.local"
+    "name": "nesfe",
+    "email": "96023593+nesfe@users.noreply.github.com"
   },
   "homepage": "https://github.com/nesfe/Sight-Reading-Bridge",
   "desktopName": "Sight Reading Bridge",
   "type": "module",
-  "main": "electron/main.cjs",
+  "main": "apps/desktop/main.cjs",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\"",
     "dev:renderer": "vite --host 0.0.0.0",
-    "dev:electron": "wait-on http://127.0.0.1:5173 && NODE_ENV=development electron electron/main.cjs",
+    "dev:electron": "wait-on http://127.0.0.1:5173 && electron . --development",
     "build": "tsc -b && vite build",
     "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:desktop": "node tests/electron-smoke.cjs",
     "lint": "eslint .",
     "preview": "vite preview",
-    "electron": "electron electron/main.cjs",
+    "electron": "electron .",
     "dist": "npm run lint && npm run test && npm run build && electron-builder",
     "dist:linux": "npm run dist -- --linux AppImage deb rpm"
   },
   "dependencies": {
+    "idb": "^8.0.3",
     "lucide-react": "^1.21.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "zustand": "^5.0.14"
+    "vexflow": "^4.2.5",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
     "@types/node": "^24.12.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -51,9 +60,10 @@
   "build": {
     "appId": "com.sightreadingbridge.desktop",
     "productName": "Sight Reading Bridge",
+    "artifactName": "Sight-Reading-Bridge-${version}-${os}-${arch}.${ext}",
     "files": [
       "dist/**/*",
-      "electron/**/*",
+      "apps/desktop/*.cjs",
       "package.json"
     ],
     "directories": {
@@ -80,7 +90,7 @@
     },
     "linux": {
       "category": "Education",
-      "maintainer": "Sight Reading Bridge <maintainers@sightreadingbridge.local>",
+      "maintainer": "nesfe <96023593+nesfe@users.noreply.github.com>",
       "syncDesktopName": true,
       "target": [
         "AppImage",

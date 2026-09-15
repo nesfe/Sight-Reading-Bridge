@@ -1,79 +1,70 @@
 # Sight Reading Bridge
 
-Modern Electron piano sight-reading trainer built around progressive staff scaffolding.
+Обучение чтению нот с постепенным снятием визуальных опор. Web и Electron используют одну учебную логику. Звук остаётся у пианино, синтезатора в приложении нет.
 
-The core product goal is not to imitate falling-note piano apps. The app teaches standard notation through temporary supports: a rotated grand staff, real staff lines, note labels, color, keyboard hints, and rhythm detail that can fade independently.
+## Открыть приложение
 
-## Why Electron
+- [Рабочая веб-версия, HTTPS](https://bridge.82-26-151-8.sslip.io) обновляется в процессе разработки.
+- [Готовые desktop-релизы](https://github.com/nesfe/Sight-Reading-Bridge/releases). Для Mac M4 нужен файл `mac-arm64.dmg`. Сборка на компьютере ученика не нужна.
+- Веб-MIDI: Chrome/Edge, разрешение MIDI и USB-подключение пианино. Для CA701 используется USB to Host. Не Bluetooth, не микрофон. Safari не является целевым MIDI-браузером этой версии.
 
-Electron uses Chromium, so Web MIDI works consistently for a local desktop app. This avoids the macOS WebView limitation that makes Tauri a poor fit for MIDI-first piano training.
+Важно: установщики пока без подтверждённой подписи разработчика и notarization. macOS может заблокировать первый запуск, Windows может показать предупреждение. Обещать запуск без предупреждений нельзя до настройки сертификатов. Веб-версия этого ограничения не имеет.
 
-The same React renderer can also run in a browser preview, but the production desktop shell is Electron.
+## Что реализовано
 
-## Current MVP
+- Взрослый маршрут: 10 занятий на статичное узнавание, последовательные паттерны, новый нотный материал и опережающее чтение.
+- Первое занятие без движения и темпа. Начинается только по команде ученика. Ошибка не переводит к следующей ноте; правильную клавишу нужно нажать и отпустить.
+- Новый воспроизводимый seed для каждой новой попытки; повтор помечается отдельно. Пробная экранная клавиатура не засчитывается в освоение курса.
+- Настоящий повёрнутый grand staff и векторные музыкальные ключи. При максимальной опоре полоса и белый промежуток равны по ширине и выровнены с клавишами. [Разбор источников и геометрии](docs/notation-decisions.md).
+- Независимые подписи, цвет, опоры стана, подсветка клавиши. Цвет и ширина постепенно уменьшаются; ориентация пока переключается, а не поворачивается анимацией.
+- USB-MIDI Note On/Off, velocity=0 как Note Off, все каналы, выбор входа, переподключение. Отключение или потеря фокуса ставят занятие на паузу.
+- В опережающем чтении нота скрывается **до** момента атаки. Пропуски, ошибки высоты, отклонение атаки и отпускания считаются отдельно.
+- Локальная история в IndexedDB, JSON-импорт/экспорт с проверкой схемы. Веб и desktop имеют отдельные хранилища, автоматической синхронизации нет.
 
-- React + TypeScript + Vite renderer.
-- Electron desktop shell with `contextIsolation`, `sandbox`, and preload bridge.
-- Shared music geometry in `packages/music-core`.
-- Rotated vertical grand staff aligned to the same coordinate function as the white piano keys.
-- Real treble and bass clef glyphs in horizontal notation.
-- No grey “space lines”; only true staff lines are drawn.
-- Web MIDI note-on handling plus virtual keyboard fallback.
-- Adaptive scaffold vector:
-  - `A` orientation
-  - `B` note names
-  - `C` color
-  - `D` staff supports
-  - `E` images
-  - `F` key highlight
-  - `G` rhythm detail
+Это рабочее взрослое ядро, а не завершённый курс всех стадий исходной методологии. Пока нет одновременной двухручной полифонии, альтераций, оценки педали, метроритмического курса с разными длительностями, печатных упражнений, слухового модуля, eye tracking и полного 30-дневного/12-недельного курса. Порог адаптации является настройкой тренажёра, а не валидированным педагогическим нормативом.
 
-## Commands
+## Задержка
 
-```bash
+Ноты обрабатываются на компьютере ученика, без сетевого запроса. Один постоянный MIDI-обработчик синхронно передаёт событие движку. Персистентность выполняется асинхронно после обратной связи; анимация не вызывает React-обновление на каждом кадре.
+
+Диагностика показывает timestamp события → обработчик и → ближайший requestAnimationFrame. Это не физическая задержка от клавиши и не измерение завершённой отрисовки пикселя. Реальный CA701/M4 нужно измерить отдельно: удалённый сервер не имеет доступа к этому инструменту.
+
+## Структура
+
+| Путь | Ответственность |
+| --- | --- |
+| `apps/web` | React-интерфейс |
+| `apps/desktop` | Изолированное окно Electron, узкий preload |
+| `packages/music-core` | MIDI/высота, общая геометрия |
+| `packages/notation-renderer` | Учебный SVG и традиционная нотация VexFlow |
+| `packages/midi-io` | Web MIDI и диагностика |
+| `packages/exercise-engine` | Seed-генератор и автомат занятия |
+| `packages/scoring-engine` | Отдельные метрики и снятие одной опоры |
+| `packages/curriculum` | Типизированные занятия и scaffold |
+| `packages/progress` | Локальная история и проверка импорта |
+| `deploy` | Caddy HTTPS и постоянный preview-сервис |
+
+Отличия от BUILD-PLAN: сохранён npm workspace и единый lockfile вместо миграции на pnpm; Vite и простой Electron entry вместо electron-vite; IndexedDB вместо отдельной desktop SQLite ради одинакового локального хранилища в обеих версиях. Движок сессии независим от React/Electron, подписка UI через useSyncExternalStore. Требование пользователя отменило программное озвучивание. Детские ассоциативные картинки не включены во взрослый маршрут.
+
+## Для разработчика
+
+Node.js 24. Пользователям установщиков эти команды не нужны.
+
+```sh
 npm ci
 npm run dev
 ```
 
-Renderer-only preview on a remote server:
-
-```bash
-npm run dev:renderer
-```
-
-Quality checks:
-
-```bash
+```sh
 npm run lint
 npm run test
 npm run build
+npx playwright install chromium
+npm run test:e2e
+# Linux, с доступом к /dev/snd/seq:
+xvfb-run -a npm run test:desktop
 ```
 
-Linux desktop packages on Linux:
+Браузерные тесты поднимают собственный локальный production-preview и используют имитацию MIDI. Desktop smoke загружает `file://` без веб-сервера и запрашивает системный MIDI.
 
-```bash
-npm run dist:linux
-```
-
-Artifacts are written to `release/`.
-
-## Cross-platform builds
-
-Linux cannot reliably produce signed macOS `.app/.dmg` artifacts. This repo includes `.github/workflows/desktop-build.yml`, which builds the Electron app on:
-
-- `macos-latest` for macOS `.dmg/.zip`
-- `windows-latest` for Windows installer
-- `ubuntu-24.04` for Linux `.AppImage/.deb/.rpm`
-
-That means users do not need to build locally; GitHub Actions produces platform-specific artifacts on the correct operating systems.
-
-## Method
-
-The app trains one new problem at a time:
-
-1. Align note positions to keyboard geography.
-2. Use a vertical grand staff where pitch axis matches piano left-to-right layout.
-3. Remove labels before removing visual orientation.
-4. Transition toward horizontal standard notation.
-5. Separate pitch, rhythm, hands, and reading-ahead load.
-6. Track first-pass accuracy and latency instead of rewarding memorization.
+GitHub Actions проверяет код и собирает macOS arm64/x64, Windows x64 и Linux x64. Тег `v*` публикует установщики и SHA256 в GitHub Releases. Секреты подписи: `CSC_LINK`, `CSC_KEY_PASSWORD`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`. Они не должны попадать в git.

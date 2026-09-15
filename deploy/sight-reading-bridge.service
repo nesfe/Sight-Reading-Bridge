@@ -1,0 +1,13 @@
+[Unit]
+Description=Sight Reading Bridge live workspace
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/claude/Sight-Reading-Bridge
+ExecStart=/usr/bin/node /home/claude/Sight-Reading-Bridge/node_modules/vite/bin/vite.js --host 127.0.0.1 --port 5173 --strictPort
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

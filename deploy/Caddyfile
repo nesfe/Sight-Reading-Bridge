@@ -1,0 +1,5 @@
+bridge.82-26-151-8.sslip.io {
+    encode zstd gzip
+    header Permissions-Policy "midi=(self)"
+    reverse_proxy 127.0.0.1:5173
+}
