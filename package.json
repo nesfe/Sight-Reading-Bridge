@@ -1,7 +1,7 @@
 {
   "name": "sight-reading-bridge",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Progressive Electron piano sight-reading trainer with Web MIDI support.",
   "author": {
     "name": "nesfe",
@@ -26,7 +26,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "electron": "electron .",
-    "dist": "npm run lint && npm run test && npm run build && electron-builder",
+    "dist": "npm run lint && npm run test && npm run build && node scripts/package-desktop.cjs",
     "dist:linux": "npm run dist -- --linux AppImage deb rpm"
   },
   "dependencies": {

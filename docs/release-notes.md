@@ -2,7 +2,7 @@
 
 [Открыть веб-версию по HTTPS](https://bridge.82-26-151-8.sslip.io)
 
-Для Mac M4: `Sight-Reading-Bridge-0.2.0-mac-arm64.dmg`. Готовые установщики также доступны для Intel Mac, Windows x64 и Linux x64. Исходники собирать не нужно.
+Для Mac M4 выбирайте файл с окончанием `mac-arm64.dmg`. Готовые установщики также доступны для Intel Mac, Windows x64 и Linux x64. Исходники собирать не нужно.
 
 **Подпись:** в этой сборке ещё нет Developer ID/notarization для macOS и сертификата Windows. Возможна блокировка Gatekeeper/предупреждение SmartScreen. Полностью беспрепятственный первый запуск desktop пока не гарантирован. Для использования без установки доступна веб-версия в Chrome/Edge.
 

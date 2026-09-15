@@ -2,6 +2,7 @@ const { _electron: electron, expect } = require('@playwright/test')
 const { mkdtemp, rm, mkdir } = require('node:fs/promises')
 const { tmpdir } = require('node:os')
 const path = require('node:path')
+const { version } = require('../package.json')
 
 async function main() {
   const profile = await mkdtemp(path.join(tmpdir(), 'srb-smoke-'))
@@ -17,7 +18,7 @@ async function main() {
     await expect(page.getByRole('heading', { name: 'Занятия', exact: true })).toBeVisible()
     expect(page.url().startsWith('file://')).toBe(true)
     expect(await page.evaluate(() => typeof window.require)).toBe('undefined')
-    expect(await page.evaluate(() => window.sightReadingBridge.getVersion())).toBe('0.2.0')
+    expect(await page.evaluate(() => window.sightReadingBridge.getVersion())).toBe(version)
     expect(await page.evaluate(() => typeof navigator.requestMIDIAccess)).toBe('function')
     await page.getByRole('button', { name: 'Подключить', exact: true }).click()
     const access = await page.evaluate(async () => {
