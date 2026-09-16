@@ -20,6 +20,8 @@ const bare: Scaffold = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, G: 1 }
 export const lessons: Lesson[] = z.array(lessonSchema).parse([
   { id: 'recognition-right', title: 'Узнавание: правая рука', group: '01 · Узнавание', stage: 1, kind: 'flash', hands: 'right', min: 0, max: 6, count: 12, tempo: 50, horizon: 0, scaffold: supported, accuracy: .9 },
   { id: 'recognition-left', title: 'Узнавание: левая рука', group: '01 · Узнавание', stage: 1, kind: 'flash', hands: 'left', min: -7, max: 0, count: 12, tempo: 50, horizon: 0, scaffold: supported, accuracy: .9 },
+  { id: 'recognition-positions', title: 'Позиции без подписей', group: '01 · Узнавание', stage: 1, kind: 'flash', hands: 'right', min: 0, max: 6, count: 12, tempo: 50, horizon: 0, scaffold: { ...supported, B: 0 }, accuracy: .9 },
+  { id: 'recognition-horizontal', title: 'Переход к горизонтали', group: '01 · Узнавание', stage: 1, kind: 'flash', hands: 'right', min: 0, max: 6, count: 12, tempo: 50, horizon: 0, scaffold: { ...supported, A: 0, B: 0 }, accuracy: .9 },
   { id: 'recognition-paper', title: 'Ноты без подписей', group: '01 · Узнавание', stage: 1, kind: 'flash', hands: 'alternating', min: -7, max: 7, count: 12, tempo: 50, horizon: 0, scaffold: bare, accuracy: .9 },
   { id: 'patterns-steps', title: 'Шаги и повторы', group: '02 · Паттерны', stage: 3, kind: 'patterns', hands: 'right', min: 0, max: 7, count: 18, tempo: 50, horizon: 0, scaffold: { ...supported, B: 0 }, accuracy: .9 },
   { id: 'patterns-triads', title: 'Терции и трезвучия', group: '02 · Паттерны', stage: 3, kind: 'patterns', hands: 'left', min: -7, max: 0, count: 18, tempo: 50, horizon: 0, scaffold: { ...bare, C: .4 }, accuracy: .9 },

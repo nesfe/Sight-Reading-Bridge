@@ -1,7 +1,7 @@
 {
   "name": "sight-reading-bridge",
   "private": true,
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Progressive Electron piano sight-reading trainer with Web MIDI support.",
   "author": {
     "name": "nesfe",
@@ -30,8 +30,10 @@
     "dist:linux": "npm run dist -- --linux AppImage deb rpm"
   },
   "dependencies": {
+    "fflate": "^0.8.3",
     "idb": "^8.0.3",
     "lucide-react": "^1.21.0",
+    "opensheetmusicdisplay": "^2.1.2",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "vexflow": "^4.2.5",
@@ -58,13 +60,15 @@
     "wait-on": "^9.0.10"
   },
   "build": {
+    "npmRebuild": false,
     "appId": "com.sightreadingbridge.desktop",
     "productName": "Sight Reading Bridge",
     "artifactName": "Sight-Reading-Bridge-${version}-${os}-${arch}.${ext}",
     "files": [
       "dist/**/*",
       "apps/desktop/*.cjs",
-      "package.json"
+      "package.json",
+      "!node_modules/**/*"
     ],
     "directories": {
       "buildResources": "build",

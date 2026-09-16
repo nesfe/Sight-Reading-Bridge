@@ -84,7 +84,7 @@ export function Score({ session, scaffold, kind, horizon, cursor, held, onDown, 
         <text className="zone-label" x="90" y="17">Басовый ключ</text><text className="zone-label" x="545" y="17">Скрипичный ключ</text>
         <VerticalClefs />
         {notes.map((note, index) => visible(note, index) && <g data-note-index={index} key={note.id} style={session.timed ? { visibility: 'hidden' } : undefined} transform={`translate(0,${session.timed ? 330 - note.beat * 62 : kind === 'patterns' ? 140 + index % 3 * 70 : 230})`}>
-          {note.step === 0 && <line className="staff-line" style={{ strokeWidth: staffLineWidth(keyboard.keyWidth, scaffold.D), stroke: staffLineColor(false, 0, scaffold.D) }} x1={whiteKeyCenterX(0, keyboard)} x2={whiteKeyCenterX(0, keyboard)} y1="-20" y2="20" />}
+          {note.step === 0 && <line data-ledger-step="0" className="ledger-line" x1={whiteKeyCenterX(0, keyboard)} x2={whiteKeyCenterX(0, keyboard)} y1="-24" y2="24" />}
           <ellipse data-note-step={note.step} cx={whiteKeyCenterX(note.step, keyboard)} cy="0" rx="9" ry="13" fill={index < cursor ? '#178464' : `color-mix(in srgb, ${note.step % 2 === 0 ? '#c95843' : '#207e90'} ${scaffold.C * 100}%, #1e2329)`} />
           {scaffold.G > 0 && <line opacity={scaffold.G} className="note-stem" x1={whiteKeyCenterX(note.step, keyboard)} x2={whiteKeyCenterX(note.step, keyboard) + 40} y1="-11" y2="-11" />}
           {scaffold.B > 0 && <text className="note-label" textAnchor="middle" opacity={scaffold.B} x={whiteKeyCenterX(note.step, keyboard)} y="36">{noteName(note.step)}</text>}

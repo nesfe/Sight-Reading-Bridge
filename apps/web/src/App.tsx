@@ -1,14 +1,16 @@
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
-import { ArrowLeft, ArrowRight, Check, ChevronRight, Download, FileUp, History, Keyboard, LayoutList, Pause, Piano, Play, RotateCcw, Settings, Usb } from 'lucide-react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { ArrowLeft, ArrowRight, Check, ChevronRight, Download, FileMusic, FileUp, History, Keyboard, LayoutList, Pause, Piano, Play, RotateCcw, Settings, Usb } from 'lucide-react'
 import { lessons, type Lesson, type Scaffold } from '../../../packages/curriculum/src'
 import { generate } from '../../../packages/exercise-engine/src'
 import { Session } from '../../../packages/exercise-engine/src/session'
 import { midi } from '../../../packages/midi-io/src'
 import { Score } from '../../../packages/notation-renderer/src/Score'
+import { PresentationControl } from '../../../packages/notation-renderer/src/PresentationControl'
 import { noteName } from '../../../packages/notation-renderer/src/geometry'
 import { adapt, median, summarize } from '../../../packages/scoring-engine/src'
 import { importRecords, read, save, type Record as ProgressRecord } from '../../../packages/progress/src'
 import './App.css'
+const Library = lazy(() => import('./Library'))
 
 type Run = { id: string; created: number; seed: number; repeat: number; lesson: Lesson; scaffold: Scaffold; demo: boolean; session: Session }
 const percent = (value: number | null) => value === null ? '—' : `${Math.round(value * 100)}%`
@@ -16,7 +18,7 @@ const ms = (value: number | null) => value === null ? '—' : `${Math.round(valu
 const handName = { right: 'Правая рука', left: 'Левая рука', alternating: 'Руки по очереди' }
 
 export default function App() {
-  const [view, setView] = useState<'lessons' | 'progress' | 'device'>('lessons')
+  const [view, setView] = useState<'lessons' | 'library' | 'progress' | 'device'>('lessons')
   const [lesson, setLesson] = useState(lessons[0])
   const [scaffold, setScaffold] = useState<Scaffold>(lessons[0].scaffold)
   const [tempo, setTempo] = useState(lessons[0].tempo)
@@ -46,6 +48,7 @@ export default function App() {
       <a className="brand" href="#" onClick={e => { e.preventDefault(); navigate('lessons') }}><Piano size={30} /><span>Sight Reading<strong>Bridge</strong></span></a>
       <nav aria-label="Основная навигация">
         <button aria-label="Занятия" className={view === 'lessons' ? 'selected' : ''} onClick={() => navigate('lessons')}><LayoutList size={19} /> Занятия</button>
+        <button aria-label="Библиотека" className={view === 'library' ? 'selected' : ''} onClick={() => navigate('library')}><FileMusic size={19} /> Библиотека</button>
         <button aria-label="Прогресс" className={view === 'progress' ? 'selected' : ''} onClick={() => navigate('progress')}><History size={19} /> Прогресс</button>
         <button aria-label="Инструмент" className={view === 'device' ? 'selected' : ''} onClick={() => navigate('device')}><Usb size={19} /> Инструмент</button>
       </nav>
@@ -54,8 +57,9 @@ export default function App() {
       <a className="download-link" href="https://github.com/nesfe/Sight-Reading-Bridge/releases/latest" target="_blank" rel="noreferrer"><Download size={16} /> Приложение для компьютера</a>
     </aside>
     <main>
-      <header className="page-header"><div><span className="eyebrow">ЧТЕНИЕ С ЛИСТА</span><h1>{view === 'lessons' ? 'Занятия' : view === 'progress' ? 'Прогресс' : 'Инструмент'}</h1></div><span className="edition">Взрослый маршрут · 01</span></header>
+      <header className="page-header"><div><span className="eyebrow">ЧТЕНИЕ С ЛИСТА</span><h1>{{ lessons: 'Занятия', library: 'Библиотека', progress: 'Прогресс', device: 'Инструмент' }[view]}</h1></div><span className="edition">Взрослый маршрут · 01</span></header>
       {storageError && <p role="alert" className="notice error">{storageError}</p>}
+      {view === 'library' && <Suspense fallback={<p role="status">Открытие библиотеки…</p>}><Library/></Suspense>}
       {view === 'lessons' && <>
         {!run ? <div className="lesson-layout">
           <section className="lesson-list" aria-label="Учебный маршрут">{lessons.map((item, index) => <div key={item.id}>
@@ -67,7 +71,8 @@ export default function App() {
             <div className="lesson-facts"><span>{handName[lesson.hands]}</span><span>{lesson.count} нот</span><span>{lesson.kind === 'ahead' ? `${lesson.horizon} ${lesson.horizon === 1 ? 'нота' : 'ноты'} вперёд` : 'Без ограничения времени'}</span></div>
             <div className="connection-strip"><Usb size={18}/><span>{device.message}</span>{device.status !== 'ready' && <button onClick={() => void midi.connect()} disabled={device.status === 'connecting'}>Подключить</button>}</div>
             <div className="lesson-preview"><ScoreLegend scaffold={scaffold}/><Score session={preview} scaffold={scaffold} kind={lesson.kind === 'patterns' ? 'patterns' : 'flash'} horizon={0} cursor={0} held={[]} onDown={() => {}} onUp={() => {}} /></div>
-            <div className="setup-fields"><label>Нотный стан<select value={scaffold.A} onChange={e => setScaffold({ ...scaffold, A: Number(e.target.value) })}><option value={1}>Повёрнутый</option><option value={0}>Горизонтальный</option></select></label>
+            <PresentationControl scaffold={scaffold} onChange={setScaffold}/>
+            <div className="setup-fields">
               {lesson.kind === 'ahead' && <label>Темп, BPM<input type="number" min={30} max={120} value={tempo} onChange={e => setTempo(Math.max(30, Math.min(120, Number(e.target.value) || 30)))} /></label>}
             </div>
             <details className="supports"><summary><Settings size={16} /> Подсказки</summary>{(['B', 'C', 'D', 'F'] as const).map(axis => <label key={axis}>{({ B: 'Подписи нот', C: 'Цвет', D: 'Толщина и номера линий', F: 'Подсветка клавиши' })[axis]}<input type="range" min="0" max="1" step=".25" value={scaffold[axis]} disabled={lesson.kind === 'ahead' && axis === 'F'} onChange={e => setScaffold({ ...scaffold, [axis]: Number(e.target.value) })} /></label>)}</details>
