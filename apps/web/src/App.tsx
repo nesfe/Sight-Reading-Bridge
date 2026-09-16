@@ -1,15 +1,18 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { ArrowLeft, ArrowRight, Check, ChevronRight, Download, FileMusic, FileUp, History, Keyboard, LayoutList, Pause, Piano, Play, RotateCcw, Settings, Usb } from 'lucide-react'
 import { lessons, type Lesson, type Scaffold } from '../../../packages/curriculum/src'
+import { recognitionPlan } from '../../../packages/curriculum/src/recognition'
 import { generate } from '../../../packages/exercise-engine/src'
 import { Session } from '../../../packages/exercise-engine/src/session'
 import { midi } from '../../../packages/midi-io/src'
 import { Score } from '../../../packages/notation-renderer/src/Score'
 import { PresentationControl } from '../../../packages/notation-renderer/src/PresentationControl'
 import { noteName } from '../../../packages/notation-renderer/src/geometry'
-import { adapt, median, summarize } from '../../../packages/scoring-engine/src'
+import { adapt, hasFullCoverage, median, summarize } from '../../../packages/scoring-engine/src'
 import { importRecords, read, save, type Record as ProgressRecord } from '../../../packages/progress/src'
 import './App.css'
+import { LessonBlocks, PitchResults } from './RecognitionProgress'
+import { noteCount } from './format'
 const Library = lazy(() => import('./Library'))
 
 type Run = { id: string; created: number; seed: number; repeat: number; lesson: Lesson; scaffold: Scaffold; demo: boolean; session: Session }
@@ -40,7 +43,7 @@ export default function App() {
       lesson: current, scaffold, demo, session: new Session(generate(current, seed), current.kind === 'ahead', tempo) })
   }
   function navigate(next: typeof view) { run?.session.pause(performance.now()); setView(next); refreshHistory() }
-  const passed = (item: Lesson) => history.some(record => record.lessonId === item.id && record.completed && !record.demo && (summarize(record.attempts).accuracy ?? 0) >= item.accuracy)
+  const passed = (item: Lesson) => history.some(record => record.lessonId === item.id && record.completed && !record.demo && (item.kind !== 'flash' || hasFullCoverage(record.attempts, item.count)) && (summarize(record.attempts).accuracy ?? 0) >= item.accuracy)
   const done = lessons.filter(passed).length
 
   return <div className="app-shell">
@@ -64,11 +67,12 @@ export default function App() {
         {!run ? <div className="lesson-layout">
           <section className="lesson-list" aria-label="Учебный маршрут">{lessons.map((item, index) => <div key={item.id}>
             {(index === 0 || item.group !== lessons[index - 1].group) && <h2>{item.group}</h2>}
-            <button className={`lesson-row ${lesson.id === item.id ? 'active' : ''}`} onClick={() => choose(item)}><span className="lesson-number">{passed(item) ? <Check size={17} /> : String(index + 1).padStart(2, '0')}</span><span>{item.title}<small>{handName[item.hands]} · {item.count} нот</small></span><ChevronRight size={17} /></button>
+            <button className={`lesson-row ${lesson.id === item.id ? 'active' : ''}`} onClick={() => choose(item)}><span className="lesson-number">{passed(item) ? <Check size={17} /> : String(index + 1).padStart(2, '0')}</span><span>{item.title}<small>{handName[item.hands]} · {noteCount(item.count)}</small></span><ChevronRight size={17} /></button>
           </div>)}</section>
           <section className="lesson-detail">
             <div className="lesson-heading"><div><span className="eyebrow">СТАДИЯ {lesson.stage}</span><h2>{lesson.title}</h2></div><button className="primary start" disabled={!demo && device.status !== 'ready'} onClick={() => start()}><Play size={18}/> Начать занятие</button></div>
-            <div className="lesson-facts"><span>{handName[lesson.hands]}</span><span>{lesson.count} нот</span><span>{lesson.kind === 'ahead' ? `${lesson.horizon} ${lesson.horizon === 1 ? 'нота' : 'ноты'} вперёд` : 'Без ограничения времени'}</span></div>
+            <div className="lesson-facts"><span>{handName[lesson.hands]}</span><span>{noteCount(lesson.count)}</span><span>{lesson.kind === 'ahead' ? `${lesson.horizon} ${lesson.horizon === 1 ? 'нота' : 'ноты'} вперёд` : 'Без ограничения времени'}</span></div>
+            {lesson.kind === 'flash' && <LessonBlocks lesson={lesson}/>}
             <div className="connection-strip"><Usb size={18}/><span>{device.message}</span>{device.status !== 'ready' && <button onClick={() => void midi.connect()} disabled={device.status === 'connecting'}>Подключить</button>}</div>
             <div className="lesson-preview"><ScoreLegend scaffold={scaffold}/><Score session={preview} scaffold={scaffold} kind={lesson.kind === 'patterns' ? 'patterns' : 'flash'} horizon={0} cursor={0} held={[]} onDown={() => {}} onUp={() => {}} /></div>
             <PresentationControl scaffold={scaffold} onChange={setScaffold}/>
@@ -123,13 +127,20 @@ function RunPanel({ run, onBack, onNew, onRepeat, onNext, onAdapt, onSaved }: { 
   const last = state.attempts.at(-1)
   const current = session.notes[state.cursor]
   const paused = state.status === 'paused'
+  const betweenBlocks = state.status === 'break'
+  const blocks = lesson.kind === 'flash' ? recognitionPlan(lesson.min, lesson.max, lesson.hands === 'alternating') : []
+  const blockIndex = blocks.findIndex(block => block.id === current?.block)
+  const block = blocks[blockIndex]
+  const previousBlock = blocks[blockIndex - 1]
+  const blockScore = previousBlock ? summarize(state.attempts.filter(attempt => attempt.index >= previousBlock.start && attempt.index < previousBlock.start + previousBlock.count)) : null
   return <section className="run-view">
-    <div className="run-toolbar"><button className="icon-button" title="К занятиям" aria-label="К занятиям" onClick={onBack}><ArrowLeft size={20}/></button><div><h2>{lesson.title}</h2><span className="muted">{handName[lesson.hands]} · {run.demo ? 'Пробный режим' : run.repeat ? 'Повтор текста' : 'Новый текст'}</span></div><span className="run-position">{Math.min(state.cursor, lesson.count)} / {lesson.count}</span>{state.status !== 'completed' && <button className="icon-button" title={paused ? 'Продолжить' : 'Пауза'} aria-label={paused ? 'Продолжить' : 'Пауза'} onClick={() => paused ? session.resume(performance.now()) : session.pause(performance.now())}>{paused ? <Play size={19}/> : <Pause size={19}/>}</button>}</div>
+    <div className="run-toolbar"><button className="icon-button" title="К занятиям" aria-label="К занятиям" onClick={onBack}><ArrowLeft size={20}/></button><div><h2>{lesson.title}</h2><span className="muted">{handName[lesson.hands]} · {run.demo ? 'Пробный режим' : run.repeat ? 'Повтор текста' : 'Новый текст'}</span></div><span className="run-position">{Math.min(state.cursor, lesson.count)} / {lesson.count}</span>{state.status !== 'completed' && !betweenBlocks && <button className="icon-button" title={paused ? 'Продолжить' : 'Пауза'} aria-label={paused ? 'Продолжить' : 'Пауза'} onClick={() => paused ? session.resume(performance.now()) : session.pause(performance.now())}>{paused ? <Play size={19}/> : <Pause size={19}/>}</button>}</div>
     <progress className="run-progress" max={lesson.count} value={state.cursor}/>
+    {blocks.length > 0 && <LessonBlocks lesson={lesson} cursor={state.cursor}/>}
     {storageError && <p role="alert" className="notice error">{storageError}</p>}
-    {state.status === 'completed' ? <div className="result-view"><Check size={36}/><h2>Занятие завершено</h2><div className="stats"><Stat label="Точность" value={percent(score.accuracy)}/><Stat label="Реакция, медиана" value={ms(score.reactionMs)}/><Stat label="Ошибки / пропуски" value={`${score.errors} / ${score.missed}`}/>{session.timed && <><Stat label="Отклонение атаки" value={ms(score.timingMs)}/><Stat label="Отклонение отпускания" value={ms(score.releaseMs)}/></>}</div><p>{run.demo ? 'Пробная попытка. В освоение курса не засчитывается.' : nextSupport.message}</p><div className="actions"><button className="primary" onClick={onNew}><Play size={17}/> Новый текст</button><button onClick={onRepeat}><RotateCcw size={17}/> Повторить</button><button onClick={onNext}>Следующее занятие <ArrowRight size={17}/></button></div></div> : <>
-      <div className="task-row"><span>{lesson.kind === 'patterns' ? `Фраза ${(current?.chunk ?? 0) + 1}` : lesson.kind === 'ahead' ? `Горизонт: ${lesson.horizon} ${lesson.horizon === 1 ? 'нота' : 'ноты'}` : 'Сыграйте ноту'}</span><span role="status" className={last?.correct ? 'correct-text' : last ? 'wrong-text' : 'muted'}>{paused ? 'Пауза' : last ? last.missed ? 'Пропуск' : last.correct ? 'Верно' : 'Другая нота' : 'Ожидание нажатия'}</span></div>
-      <div className="run-score"><ScoreLegend scaffold={run.scaffold}/><Score session={session} scaffold={run.scaffold} kind={lesson.kind} horizon={lesson.horizon} cursor={state.cursor} held={state.held} onDown={note => { if (run.demo) session.noteOn(note, performance.now()) }} onUp={note => { if (run.demo) session.noteOff(note, performance.now()) }}/>{paused && <div className="pause-overlay"><Pause size={28}/><h3>Пауза</h3><button className="primary" onClick={() => session.resume(performance.now())}><Play size={17}/> Продолжить</button></div>}</div>
+    {state.status === 'completed' ? <div className="result-view"><Check size={36}/><h2>Занятие завершено</h2><div className="stats"><Stat label="Точность" value={percent(score.accuracy)}/><Stat label="Реакция, медиана" value={ms(score.reactionMs)}/><Stat label="Ошибки / пропуски" value={`${score.errors} / ${score.missed}`}/>{session.timed && <><Stat label="Отклонение атаки" value={ms(score.timingMs)}/><Stat label="Отклонение отпускания" value={ms(score.releaseMs)}/></>}</div><p>{run.demo ? 'Пробная попытка. В освоение курса не засчитывается.' : nextSupport.message}</p><div className="actions"><button className="primary" onClick={onNew}><Play size={17}/> Новый текст</button><button onClick={onRepeat}><RotateCcw size={17}/> Повторить</button><button onClick={onNext}>Следующее занятие <ArrowRight size={17}/></button></div>{lesson.kind === 'flash' && <PitchResults attempts={state.attempts}/>}</div> : <>
+      <div className="task-row"><span>{block ? `${block.title} · ${state.cursor - block.start + 1} / ${block.count}` : lesson.kind === 'patterns' ? `Фраза ${(current?.chunk ?? 0) + 1}` : lesson.kind === 'ahead' ? `Горизонт: ${lesson.horizon} ${lesson.horizon === 1 ? 'нота' : 'ноты'}` : 'Сыграйте ноту'}</span><span role="status" className={last?.correct ? 'correct-text' : last ? 'wrong-text' : 'muted'}>{betweenBlocks ? 'Перерыв между блоками' : paused ? 'Пауза' : last ? last.missed ? 'Пропуск' : last.correct ? 'Верно' : 'Другая нота' : 'Ожидание нажатия'}</span></div>
+      <div className="run-score"><ScoreLegend scaffold={run.scaffold}/><Score session={session} scaffold={run.scaffold} kind={lesson.kind} horizon={lesson.horizon} cursor={state.cursor} held={state.held} onDown={note => { if (run.demo) session.noteOn(note, performance.now()) }} onUp={note => { if (run.demo) session.noteOff(note, performance.now()) }}/>{paused && <div className="pause-overlay"><Pause size={28}/><h3>Пауза</h3><button className="primary" onClick={() => session.resume(performance.now())}><Play size={17}/> Продолжить</button></div>}{betweenBlocks && <div className="pause-overlay block-break"><Check size={28}/><h3>Блок {blockIndex} завершён</h3><span>{previousBlock?.title}</span><p>Точность {percent(blockScore?.accuracy ?? null)} · Реакция {ms(blockScore?.reactionMs ?? null)}</p><button className="primary" onClick={() => session.resume(performance.now())}>Следующий блок <ArrowRight size={17}/></button><span className="muted">{block?.title}</span></div>}</div>
       <div className="session-footer"><span><Keyboard size={17}/> {run.demo ? 'Экранная клавиатура' : 'USB-MIDI'}</span><span>Точность {percent(score.accuracy)}</span><span>Реакция {ms(score.reactionMs)}</span>{!session.timed && run.scaffold.B > 0 && current && <span>{noteName(current.step)}</span>}</div>
     </>}
   </section>

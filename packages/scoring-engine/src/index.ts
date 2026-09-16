@@ -22,6 +22,32 @@ export function summarize(attempts: Attempt[]) {
   }
 }
 
+export function summarizePitches(attempts: Attempt[]) {
+  const positions = new Map<number, Attempt[]>()
+  for (const attempt of attempts) {
+    const group = positions.get(attempt.index) ?? []
+    group.push(attempt); positions.set(attempt.index, group)
+  }
+  const pitches = new Map<number, { midi: number; seen: number; firstTry: number; errors: number; reactions: number[] }>()
+  for (const group of positions.values()) {
+    const first = group[0]
+    const pitch = pitches.get(first.expected) ?? { midi: first.expected, seen: 0, firstTry: 0, errors: 0, reactions: [] }
+    pitch.seen++
+    if (first.correct) pitch.firstTry++
+    pitch.errors += group.filter(attempt => !attempt.correct).length
+    const reaction = group.find(attempt => attempt.correct)?.reactionMs
+    if (reaction !== null && reaction !== undefined) pitch.reactions.push(reaction)
+    pitches.set(first.expected, pitch)
+  }
+  return [...pitches.values()].sort((a, b) => a.midi - b.midi).map(({ reactions, ...pitch }) => ({ ...pitch, accuracy: pitch.firstTry / pitch.seen, reactionMs: median(reactions) }))
+}
+
+export function hasFullCoverage(attempts: Attempt[], count: number) {
+  const completed = new Set(attempts.filter(attempt => attempt.correct).map(attempt => attempt.index))
+  for (let index = 0; index < count; index++) if (!completed.has(index)) return false
+  return true
+}
+
 // A single completed sample can change one support. Orientation is always explicit.
 export function adapt(scaffold: Scaffold, attempts: Attempt[], required: number): { scaffold: Scaffold; message: string } {
   const score = summarize(attempts)

@@ -2,7 +2,7 @@ import type { ExerciseNote } from './index'
 import type { Attempt } from '../../scoring-engine/src'
 import { stepToPitch } from '../../music-core/src/staffGeometry'
 
-export type Status = 'ready' | 'running' | 'paused' | 'completed'
+export type Status = 'ready' | 'running' | 'paused' | 'break' | 'completed'
 export type SessionState = { status: Status; cursor: number; elapsed: number; attempts: Attempt[]; feedback: 'none' | 'correct' | 'wrong'; held: number[] }
 export class Session {
   state: SessionState = { status: 'ready', cursor: 0, elapsed: 0, attempts: [], feedback: 'none', held: [] }
@@ -32,11 +32,15 @@ export class Session {
     this.held.clear(); this.releaseTargets.clear()
   }
   resume(now: number) {
-    if (this.state.status !== 'paused') return
+    if (this.state.status !== 'paused' && this.state.status !== 'break') return
     this.clock = now - this.state.elapsed; this.shownAt = null
+    this.held.clear()
     // A correct note awaiting release must not require a second scored attack after disconnect.
-    if (this.accepted !== null) { this.accepted = null; this.advance() }
-    if (this.state.cursor < this.notes.length || this.timed) this.emit({ status: 'running', feedback: 'none' })
+    if (this.accepted !== null) {
+      this.accepted = null; this.advance(now)
+      if (this.state.status === 'break') return
+    }
+    if (this.state.cursor < this.notes.length || this.timed) this.emit({ status: 'running', feedback: 'none', held: [] })
   }
   tick(now: number) {
     if (this.state.status !== 'running') return
@@ -75,7 +79,7 @@ export class Session {
     if (correct) {
       if (this.timed) {
         this.releaseTargets.set(midi, { index: this.state.attempts.length - 1, end: this.onset(index) + this.notes[index].beats * this.beatMs })
-        this.advance()
+        this.advance(now)
       } else this.accepted = midi
     }
   }
@@ -87,11 +91,14 @@ export class Session {
       this.releaseTargets.delete(midi); this.emit({ attempts })
     }
     this.emit({ held: [...this.held] })
-    if (this.state.status === 'running' && this.accepted === midi) { this.accepted = null; this.advance() }
+    if (this.state.status === 'running' && this.accepted === midi) { this.accepted = null; this.advance(now) }
   }
-  private advance() {
+  private advance(now: number) {
     const cursor = this.state.cursor + 1
     this.shownAt = null
-    this.emit({ cursor, ...(!this.timed && cursor === this.notes.length ? { status: 'completed' as const } : {}) })
+    const finished = !this.timed && cursor === this.notes.length
+    const blockEnded = !this.timed && !finished && this.notes[cursor]?.block !== undefined && this.notes[cursor].block !== this.notes[cursor - 1].block
+    if (blockEnded || finished) this.held.clear()
+    this.emit({ cursor, elapsed: now - this.clock, ...(blockEnded || finished ? { held: [], status: finished ? 'completed' as const : 'break' as const } : {}) })
   }
 }
