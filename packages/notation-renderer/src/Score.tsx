@@ -84,9 +84,9 @@ export function Score({ session, scaffold, kind, horizon, cursor, held, onDown, 
         <text className="zone-label" x="90" y="17">Басовый ключ</text><text className="zone-label" x="545" y="17">Скрипичный ключ</text>
         <VerticalClefs />
         {notes.map((note, index) => visible(note, index) && <g data-note-index={index} key={note.id} style={session.timed ? { visibility: 'hidden' } : undefined} transform={`translate(0,${session.timed ? 330 - note.beat * 62 : kind === 'patterns' ? 140 + index % 3 * 70 : 230})`}>
-          {note.step === 0 && <line data-ledger-step="0" className="ledger-line" x1={whiteKeyCenterX(0, keyboard)} x2={whiteKeyCenterX(0, keyboard)} y1="-24" y2="24" />}
           <ellipse data-note-step={note.step} cx={whiteKeyCenterX(note.step, keyboard)} cy="0" rx="9" ry="13" fill={index < cursor ? '#178464' : `color-mix(in srgb, ${note.step % 2 === 0 ? '#c95843' : '#207e90'} ${scaffold.C * 100}%, #1e2329)`} />
-          {scaffold.G > 0 && <line opacity={scaffold.G} className="note-stem" x1={whiteKeyCenterX(note.step, keyboard)} x2={whiteKeyCenterX(note.step, keyboard) + 40} y1="-11" y2="-11" />}
+          {note.step === 0 && <line data-ledger-step="0" className="ledger-line" x1={whiteKeyCenterX(0, keyboard)} x2={whiteKeyCenterX(0, keyboard)} y1="-18" y2="18" />}
+          {session.timed && scaffold.G > 0 && <line opacity={scaffold.G} className="note-stem" x1={whiteKeyCenterX(note.step, keyboard)} x2={whiteKeyCenterX(note.step, keyboard) + 40} y1="-11" y2="-11" />}
           {scaffold.B > 0 && <text className="note-label" textAnchor="middle" opacity={scaffold.B} x={whiteKeyCenterX(note.step, keyboard)} y="36">{noteName(note.step)}</text>}
         </g>)}
         {session.timed && <line className="focus-line" x1="30" x2="806" y1="330" y2="330" />}
@@ -115,6 +115,8 @@ function Horizontal({ notes, allNotes, cursor, scaffold, timed, horizon }: { not
     notes.forEach((note, visibleIndex) => {
       const index = allNotes.indexOf(note), pitch = stepToPitch(note.step), clef = note.step < 0 ? 'bass' : 'treble'
       const staveNote = new StaveNote({ clef, keys: [`${pitch.letter.toLowerCase()}/${pitch.octave}`], duration: 'q' })
+      // Self-paced pitch exercises carry no rhythmic value, regardless of presentation.
+      staveNote.getStem()?.setVisibility(timed)
       const x = timed ? 160 + index * 72 : 210 + visibleIndex * 165
       new TickContext().addTickable(staveNote).preFormat().setX(x - 35)
       staveNote.setStave(clef === 'bass' ? bottom : top).setContext(ctx)

@@ -199,4 +199,13 @@ test('C4 has a local ledger and equal bands survive the horizontal transition', 
   await expect(page.getByRole('radio', { name: '3 Обычный нотный стан' })).toHaveAttribute('aria-checked', 'true')
   await expect(page.locator('.standard-score .vf-clef')).toHaveCount(2)
   await page.screenshot({ path: 'output/playwright/progression-standard.png' })
+  await expect(page.locator('.standard-score .vf-stem')).toHaveCount(0)
+  // Switching from standard notation used to leak G=1 into pitch-only previews.
+  await page.getByRole('radio', { name: '1 Вертикальные полосы' }).click()
+  await expect(page.locator('.note-stem')).toHaveCount(0)
+  await expect(page.locator('[data-ledger-step="0"]')).toHaveCount(1)
+  await page.getByRole('button', { name: 'Начать занятие' }).click()
+  await expect(page.locator('.run-score .note-stem')).toHaveCount(0)
+  await expect(page.locator('.run-score [data-ledger-step="0"]')).toHaveCount(1)
+  await page.screenshot({ path: 'output/playwright/middle-c-no-stem.png' })
 })
