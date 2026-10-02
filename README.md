@@ -1,88 +1,117 @@
 # Sight Reading Bridge
 
-Обучение чтению нот с постепенным снятием визуальных опор. Web и Electron используют одну учебную логику. Звук остаётся у пианино, синтезатора в приложении нет.
+**From the keyboard to the score, one step at a time.**
 
-## Открыть приложение
+[![Checks](https://github.com/nesfe/Sight-Reading-Bridge/actions/workflows/desktop-build.yml/badge.svg?branch=main)](https://github.com/nesfe/Sight-Reading-Bridge/actions/workflows/desktop-build.yml)
+[![Latest release](https://img.shields.io/github/v/release/nesfe/Sight-Reading-Bridge?label=release&color=287d68)](https://github.com/nesfe/Sight-Reading-Bridge/releases/latest)
+[![Desktop platforms](https://img.shields.io/badge/desktop-macOS%20%7C%20Windows%20%7C%20Linux-52636b)](https://github.com/nesfe/Sight-Reading-Bridge/releases/latest)
+[![Web MIDI](https://img.shields.io/badge/input-USB%20%C2%B7%20Web%20MIDI-287d68)](#connect-your-piano)
 
-- [Рабочая веб-версия, HTTPS](https://bridge.82-26-151-8.sslip.io) обновляется в процессе разработки.
-- [Готовые desktop-релизы](https://github.com/nesfe/Sight-Reading-Bridge/releases). Для Mac M4 нужен файл `mac-arm64.dmg`. Сборка на компьютере ученика не нужна.
-- Веб-MIDI: Chrome/Edge, разрешение MIDI и USB-подключение пианино. Для CA701 используется USB to Host. Не Bluetooth, не микрофон. Safari не является целевым MIDI-браузером этой версии.
+Sight Reading Bridge is a piano sight-reading trainer for the web and desktop. It connects notes to keys through a visual grand staff, then gradually removes the support as you move toward conventional notation. Play on your own digital piano, receive feedback locally, and keep the sound of your instrument.
 
-Важно: установщики пока без подтверждённой подписи разработчика и notarization. macOS может заблокировать первый запуск, Windows может показать предупреждение. Обещать запуск без предупреждений нельзя до настройки сертификатов. Веб-версия этого ограничения не имеет.
+**[Open the web app](https://bridge.82-26-151-8.sslip.io)** · **[Download for desktop](https://github.com/nesfe/Sight-Reading-Bridge/releases/latest)** · **[Русская документация](README.ru.md)**
 
-## Что реализовано
+![A right-hand recognition lesson: the vertical grand staff aligns with the piano keyboard, with four practice blocks and a middle-C prompt.](docs/images/recognition-lesson.png)
 
-- Взрослый маршрут: 12 занятий на статичное узнавание, последовательные паттерны, новый нотный материал и опережающее чтение.
-- Первое занятие без движения и темпа. Начинается только по команде ученика. Ошибка не переводит к следующей ноте; правильную клавишу нужно нажать и отпустить.
-- Узнавание теперь состоит из четырёх блоков: карта нот, соседние позиции, сбалансированное перемешивание и проверка. Правая рука: 115 предъявлений (C4–B4), левая: 132 (C3–C4), каждую ноту обязательно предъявляют минимум 15 раз. Для переходных занятий также используется полный материал; двухручное узнавание содержит 133 предъявления.
-- Между блоками есть перерыв с явным продолжением. Время перерыва не входит в реакцию и активную длительность. В итогах показаны предъявления, ответы с первой попытки, ошибки и медианная реакция отдельно по каждой ноте.
-- Новый воспроизводимый seed для каждой новой попытки; повтор помечается отдельно. Пробная экранная клавиатура не засчитывается в освоение курса.
-- Настоящий повёрнутый grand staff и векторные музыкальные ключи. При максимальной опоре полоса и белый промежуток равны по ширине и выровнены с клавишами. [Разбор источников и геометрии](docs/notation-decisions.md).
-- Независимые подписи, цвет, опоры стана, подсветка клавиши. Цвет и ширина постепенно уменьшаются; ориентация пока переключается, а не поворачивается анимацией.
-- Три явных представления учебных упражнений: вертикальные равные полосы → горизонтальные равные полосы → обычный нотный стан. В маршруте есть отдельное занятие перехода к горизонтали. C4 имеет локальную тонкую добавочную черту, повёрнутую вместе со станом.
-- Библиотека MusicXML/MXL: импорт, локальное сохранение, удаление, масштабирование, экспорт MusicXML. Полная партитура отображается через OpenSheetMusicDisplay. Аккорды, альтерации, паузы, длительности и лиги сохраняются в записи.
-- Импортированные партии можно проходить по высоте с USB-MIDI, выбирая инструмент и отдельный стан. Аккорд требует одновременного удержания всех новых нот; лига не требует повторной атаки. Перемещается только курсор, а не перерисовывается вся партитура на каждое MIDI-событие.
-- USB-MIDI Note On/Off, velocity=0 как Note Off, все каналы, выбор входа, переподключение. Отключение или потеря фокуса ставят занятие на паузу.
-- В опережающем чтении нота скрывается **до** момента атаки. Пропуски, ошибки высоты, отклонение атаки и отпускания считаются отдельно.
-- Локальная история в IndexedDB, JSON-импорт/экспорт с проверкой схемы. Веб и desktop имеют отдельные хранилища, автоматической синхронизации нет.
+*The current application, shown in on-screen keyboard demo mode. The interface is currently in Russian.*
 
-Это рабочее взрослое ядро, а не завершённый курс всех стадий исходной методологии. Генерируемые учебные упражнения пока одноголосные и без альтераций; импорт поддерживает полифоническую запись и проверку высоты аккордов. Пока нет оценки педали, метроритмического курса с разными длительностями, печатных упражнений, слухового модуля, eye tracking и полного 30-дневного/12-недельного курса. Порог адаптации является настройкой тренажёра, а не валидированным педагогическим нормативом.
+## The Learning Approach
 
-В узнавание включены проходы диапазона вверх/вниз, пары соседних позиций и несколько перемешанных наборов, каждый из которых содержит все изучаемые ноты. Первые проходы обеих рук начинаются с C4. При новой попытке порядок в перемешанных блоках меняется; при повторе seed сохраняется. Длительность не фиксируется таймером: она зависит от темпа ученика. Число предъявлений — настройка материала, а не гарантия запоминания.
+Reading a score combines pitch recognition, keyboard navigation, rhythm, and looking ahead. Sight Reading Bridge introduces these demands in stages, giving each skill room to develop.
 
-Старая история коротких занятий сохраняется, но завершённые попытки из 12 нот не засчитываются как прохождение нового полного занятия. Для зачёта узнавания нужны все позиции нового материала и установленная точность.
-
-## Импорт Партитур
-
-Форматы: MusicXML partwise `.musicxml` / `.xml`, сжатый MusicXML `.mxl`. MXL разбирается по `META-INF/container.xml`, как определено в [спецификации W3C MusicXML](https://www.w3.org/2021/06/musicxml40/container-reference/elements/container/); гравировку выполняет [OpenSheetMusicDisplay](https://github.com/opensheetmusicdisplay/opensheetmusicdisplay). Размер файла до 10 МБ, распакованного MXL до 32 МБ; до 30 000 нот и 4 000 тактов суммарно по партиям. Файл обрабатывается локально и не отправляется на сервер. Внешние изображения и ссылки не загружаются. Одинаковый исходный XML не дублируется в библиотеке.
-
-Для импортированной партитуры доступны горизонтальные равные полосы и обычная запись. Вертикальное преобразование произвольных импортированных партитур пока **не реализовано**. MIDI-режим проверяет только высоту новых атак, без оценки ритма, пауз, длительности удержания и педали. Повторы не исполняются; форшлаги пропускаются, арпеджио и тремоло проверяются как основные записанные ноты с предупреждением. В этом режиме результат не сохраняется в историю курса. Для микротонов, табулатур и высот вне A0–C8 доступен только просмотр. Для транспонирующих инструментов ожидается записанная высота на клавиатуре, не транспонированное звучание.
-
-MusicXML timewise, MEI, MIDI-файлы, PDF и собственные форматы редакторов пока не импортируются. MIDI не хранит полноценную исходную нотную запись, а PDF требует распознавания; они не переименовываются и не выдаются за MusicXML. Из нотного редактора следует экспортировать MusicXML partwise. Возможности гравировки определяются OSMD; идентичное печатному оригиналу оформление любого файла не гарантируется.
-
-## Задержка
-
-Ноты обрабатываются на компьютере ученика, без сетевого запроса. Один постоянный MIDI-обработчик синхронно передаёт событие движку. Персистентность выполняется асинхронно после обратной связи; анимация не вызывает React-обновление на каждом кадре.
-
-Диагностика показывает timestamp события → обработчик и → ближайший requestAnimationFrame. Это не физическая задержка от клавиши и не измерение завершённой отрисовки пикселя. Реальный CA701/M4 нужно измерить отдельно: удалённый сервер не имеет доступа к этому инструменту.
-
-## Структура
-
-| Путь | Ответственность |
+| View | Visual support |
 | --- | --- |
-| `apps/web` | React-интерфейс |
-| `apps/desktop` | Изолированное окно Electron, узкий preload |
-| `packages/music-core` | MIDI/высота, общая геометрия |
-| `packages/notation-renderer` | Учебный SVG и традиционная нотация VexFlow |
-| `packages/midi-io` | Web MIDI и диагностика |
-| `packages/exercise-engine` | Seed-генератор и автомат занятия |
-| `packages/scoring-engine` | Отдельные метрики и снятие одной опоры |
-| `packages/curriculum` | Типизированные занятия и scaffold |
-| `packages/progress` | Локальная история и проверка импорта |
-| `packages/score-import` | Ограниченный MXL-разбор, библиотека, OSMD-модель и MIDI-проверка аккордов |
-| `deploy` | Caddy HTTPS и постоянный preview-сервис |
+| **Vertical staff** | Note positions align with the keyboard. Staff bands and the spaces between them have equal width. |
+| **Horizontal staff** | The same equal-width bands preserve familiar visual cues in the conventional reading direction. |
+| **Standard notation** | A conventional grand staff, with visual support reduced as the learner progresses. |
 
-Отличия от BUILD-PLAN: сохранён npm workspace и единый lockfile вместо миграции на pnpm; Vite и простой Electron entry вместо electron-vite; IndexedDB вместо отдельной desktop SQLite ради одинакового локального хранилища в обеих версиях. Движок сессии независим от React/Electron, подписка UI через useSyncExternalStore. Требование пользователя отменило программное озвучивание. Детские ассоциативные картинки не включены во взрослый маршрут.
+Labels, color, staff width, and key highlights can be adjusted independently. Recognition exercises wait for a correct press and release; timed exercises introduce continuous reading and looking ahead. New attempts and repeated material are tracked separately.
 
-## Для разработчика
+## Practice With Purpose
 
-Node.js 24. Пользователям установщиков эти команды не нужны.
+- **A structured adult learning path.** Twelve lessons cover note recognition, melodic patterns, generated reading material, and reading ahead.
+- **Complete note coverage.** Right-hand recognition includes 115 prompts; left-hand recognition includes 132. Every note in these lessons appears at least 15 times, across range practice, neighboring positions, shuffled sets, and a final check.
+- **Progress you can inspect.** Review first-attempt accuracy, errors, and median reaction time for each note. Practice blocks include breaks, which are excluded from active practice time.
+- **Your own sheet music.** Import MusicXML or compressed MXL, view a full score, select a part or staff, and follow it with MIDI pitch feedback, including chords and tied notes.
+- **Local storage.** Lesson history and imported scores stay on your device. Export and import progress as JSON; manage scores in a local library. Web and desktop storage are separate.
+
+## Get Started
+
+### In Your Browser
+
+Open the [web app](https://bridge.82-26-151-8.sslip.io) in Chrome or Edge. Connect a USB-MIDI piano and allow MIDI access when prompted. To explore without an instrument, enable the on-screen keyboard demo; demo attempts do not count toward course completion.
+
+### On Your Desktop
+
+Download an installer from [GitHub Releases](https://github.com/nesfe/Sight-Reading-Bridge/releases/latest). No local compilation or developer tools are required.
+
+| System | Download |
+| --- | --- |
+| macOS, Apple Silicon (M1 and later) | `mac-arm64.dmg` |
+| macOS, Intel | `mac-x64.dmg` |
+| Windows, x64 | `win-x64.exe` |
+| Linux, x64 | `.AppImage`, `.deb`, or `.rpm` |
+
+Current desktop releases are unsigned, and macOS builds are not notarized. Gatekeeper or SmartScreen may warn or block the first launch. The web app is available without installation.
+
+### Connect Your Piano
+
+Use your instrument's **USB-to-host** connection. Select its MIDI input in the app, then start a lesson. The intended setup uses wired USB MIDI; Bluetooth and microphone input are outside the current scope. Audio comes from your piano, with no software synthesizer in the app.
+
+MIDI events are processed on your computer, without a server round trip for each note. The same lesson engine powers both versions. Diagnostic timing covers software event handling and the next animation frame; it is not a measurement of physical key-to-screen latency.
+
+## Bring Your Own Scores
+
+The library accepts MusicXML partwise files (`.musicxml`, `.xml`) and compressed MusicXML (`.mxl`). Files are parsed locally and rendered with OpenSheetMusicDisplay. Notation retains chords, accidentals, rests, durations, and ties.
+
+Imported scores support horizontal bands and standard notation. MIDI following checks pitch, with part and staff selection. Rhythm, note-release timing, and pedal use are not graded in this mode, and results are not yet saved to course history. Repeats are not expanded and grace notes are skipped. Arbitrary imported scores do not yet have a vertical view.
+
+PDF, MIDI files, MusicXML timewise, and native notation-editor formats are not supported. Export MusicXML partwise from your notation editor to use a score here. See the [detailed import notes](README.ru.md#импорт-партитур) for limits and notation-specific behavior.
+
+## Project Status
+
+Sight Reading Bridge is in active development. The current release provides a working adult practice path; the full proposed curriculum is still being developed. Generated exercises are currently single-voice and use natural notes. Ear training, pedal assessment, and a complete rhythm curriculum are not yet included. View changes are immediate rather than animated rotations.
+
+The project draws on the idea of gradually withdrawing visual support. Its practice thresholds are configurable training choices, not validated learning standards. The [methodology](docs/source-methodology.md) and [notation design notes](docs/notation-decisions.md), both in Russian, explain the rationale and distinguish the longer-term plan from the current implementation.
+
+## Development
+
+Built with **TypeScript, React, Vite, and Electron**, using **Web MIDI** for input, **VexFlow** for lesson notation, **OpenSheetMusicDisplay** for imported scores, and **IndexedDB** for local storage.
+
+Node.js 24 is required for development. Desktop installers do not require Node.js.
 
 ```sh
 npm ci
 npm run dev
 ```
 
+| Directory | Purpose |
+| --- | --- |
+| `apps/web` | Shared React interface |
+| `apps/desktop` | Electron window and isolated preload |
+| `packages/music-core` | Pitch mapping and shared staff/keyboard geometry |
+| `packages/notation-renderer` | Teaching views and conventional notation |
+| `packages/midi-io` | MIDI input, connection handling, and diagnostics |
+| `packages/exercise-engine` | Reproducible exercise generation and session state |
+| `packages/scoring-engine` | Performance metrics and support adjustment |
+| `packages/curriculum` | Typed lessons and visual support settings |
+| `packages/progress` | Local history and validated progress import |
+| `packages/score-import` | MusicXML/MXL library and score following |
+
+### Verification
+
 ```sh
 npm run lint
-npm run test
+npm test
 npm run build
 npx playwright install chromium
 npm run test:e2e
-# Linux, с доступом к /dev/snd/seq:
-xvfb-run -a npm run test:desktop
 ```
 
-Браузерные тесты поднимают собственный локальный production-preview и используют имитацию MIDI. Desktop smoke загружает `file://` без веб-сервера и запрашивает системный MIDI.
+Browser tests use simulated MIDI. On Linux, the Electron smoke test runs with `xvfb-run -a npm run test:desktop` and requires access to the system MIDI sequencer. Physical instrument latency requires a separate hardware measurement.
 
-GitHub Actions проверяет код и собирает macOS arm64/x64, Windows x64 и Linux x64. Тег `v*` публикует установщики и SHA256 в GitHub Releases. Секреты подписи: `CSC_LINK`, `CSC_KEY_PASSWORD`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`. Они не должны попадать в git.
+GitHub Actions runs checks on `main`. Version tags publish macOS arm64/x64, Windows x64, and Linux x64 installers, along with SHA-256 checksums. Third-party import notices are included in [IMPORT-NOTICES.txt](public/IMPORT-NOTICES.txt).
+
+## Feedback
+
+Use [GitHub Issues](https://github.com/nesfe/Sight-Reading-Bridge/issues) for bugs and suggestions. For a MIDI issue, include your operating system, browser or app version, instrument model, and the steps that reproduce it.
