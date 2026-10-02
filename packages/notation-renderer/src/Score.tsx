@@ -1,3 +1,4 @@
+import { getLocale, t } from '../../i18n/src'
 import { useEffect, useRef } from 'react'
 import { Renderer, Stave, StaveNote, TickContext, StaveConnector, Clef, Glyph } from 'vexflow'
 import type { Scaffold } from '../../curriculum/src'
@@ -10,7 +11,7 @@ const steps = Array.from({ length: 21 }, (_, i) => i - 10)
 
 export function PianoKeyboard({ held, hint, onDown, onUp }: { held: number[]; hint?: number; onDown: (midi: number) => void; onUp: (midi: number) => void }) {
   const events = (midi: number) => ({
-    role: 'button', tabIndex: 0, 'aria-label': `Клавиша MIDI ${midi}`, 'data-midi': midi,
+    role: 'button', tabIndex: 0, 'aria-label': t('Клавиша MIDI {{number}}', { number: midi }), 'data-midi': midi,
     onPointerDown: (e: React.PointerEvent<SVGRectElement>) => { e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId); onDown(midi) },
     onPointerUp: () => onUp(midi), onPointerCancel: () => onUp(midi), onLostPointerCapture: () => onUp(midi),
     onKeyDown: (e: React.KeyboardEvent) => { if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) { e.preventDefault(); onDown(midi) } },
@@ -73,7 +74,7 @@ export function Score({ session, scaffold, kind, horizon, cursor, held, onDown, 
     return () => cancelAnimationFrame(frame)
   }, [session, kind, horizon, horizontal])
 
-  return <div ref={root} className="score-scroll" aria-label={horizontal ? 'Горизонтальный большой нотный стан' : 'Повёрнутый большой нотный стан'}>
+  return <div ref={root} className="score-scroll" aria-label={horizontal ? t("Горизонтальный большой нотный стан") : t("Повёрнутый большой нотный стан")}>
     {horizontal ? <Horizontal notes={notes.filter(visible)} allNotes={notes} cursor={cursor} scaffold={scaffold} timed={session.timed} horizon={kind === 'ahead' ? horizon : 0} /> :
       <svg className="score" viewBox="0 0 836 480">
         {[...BASS_LINE_STEPS, ...TREBLE_LINE_STEPS].map(step => <g key={step}>
@@ -81,7 +82,7 @@ export function Score({ session, scaffold, kind, horizon, cursor, held, onDown, 
           {scaffold.D > 0 && <text opacity={scaffold.D} className="line-number" x={whiteKeyCenterX(step, keyboard)} y="29">{Math.abs(step) / 2}</text>}
         </g>)}
         {scaffold.D > 0 && <text opacity={scaffold.D} className="line-number middle-c" x={whiteKeyCenterX(0, keyboard)} y="29">0</text>}
-        <text className="zone-label" x="90" y="17">Басовый ключ</text><text className="zone-label" x="545" y="17">Скрипичный ключ</text>
+        <text className="zone-label" x="90" y="17">{t("Басовый ключ")}</text><text className="zone-label" x="545" y="17">{t("Скрипичный ключ")}</text>
         <VerticalClefs />
         {notes.map((note, index) => visible(note, index) && <g data-note-index={index} key={note.id} style={session.timed ? { visibility: 'hidden' } : undefined} transform={`translate(0,${session.timed ? 330 - note.beat * 62 : kind === 'patterns' ? 140 + index % 3 * 70 : 230})`}>
           <ellipse data-note-step={note.step} cx={whiteKeyCenterX(note.step, keyboard)} cy="0" rx="9" ry="13" fill={index < cursor ? '#178464' : `color-mix(in srgb, ${note.step % 2 === 0 ? '#c95843' : '#207e90'} ${scaffold.C * 100}%, #1e2329)`} />
@@ -100,6 +101,7 @@ export function Score({ session, scaffold, kind, horizon, cursor, held, onDown, 
 
 function Horizontal({ notes, allNotes, cursor, scaffold, timed, horizon }: { notes: ExerciseNote[]; allNotes: ExerciseNote[]; cursor: number; scaffold: Scaffold; timed: boolean; horizon: number }) {
   const container = useRef<HTMLDivElement>(null)
+  const locale = getLocale()
   useEffect(() => {
     const div = container.current
     if (!div) return
@@ -130,7 +132,7 @@ function Horizontal({ notes, allNotes, cursor, scaffold, timed, horizon }: { not
       ctx.closeGroup()
     })
     const svg = div.querySelector('svg')!
-    svg.setAttribute('viewBox', '0 0 836 335'); svg.removeAttribute('width'); svg.removeAttribute('height'); svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', 'Скрипичный и басовый ключи')
+    svg.setAttribute('viewBox', '0 0 836 335'); svg.removeAttribute('width'); svg.removeAttribute('height'); svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', t('Скрипичный и басовый ключи'))
     if (timed) {
       const count = document.createElementNS('http://www.w3.org/2000/svg', 'text')
       Object.entries({ 'data-count-in': '', x: '418', y: '180', class: 'count-in' }).forEach(([k,v]) => count.setAttribute(k,v)); svg.append(count)
@@ -141,12 +143,13 @@ function Horizontal({ notes, allNotes, cursor, scaffold, timed, horizon }: { not
         Object.entries({ x: '160', y: '30', width: String(horizon * 72), height: '275', class: 'curtain' }).forEach(([k,v]) => rect.setAttribute(k,v)); svg.append(rect)
       }
     }
-  }, [notes, allNotes, cursor, scaffold, timed, horizon])
+  }, [notes, allNotes, cursor, scaffold, timed, horizon, locale])
   return <div className="standard-score" ref={container} />
 }
 
 function VerticalClefs() {
   const group = useRef<SVGGElement>(null)
+  const locale = getLocale()
   useEffect(() => {
     if (!group.current) return
     group.current.replaceChildren()
@@ -156,10 +159,10 @@ function VerticalClefs() {
       Glyph.renderGlyph(renderer.getContext(), 0, 0, 32, Clef.types[type].code)
       const clef = document.createElementNS('http://www.w3.org/2000/svg', 'g')
       clef.setAttribute('transform', `translate(${whiteKeyCenterX(step, keyboard)},58) rotate(90)`)
-      clef.setAttribute('aria-label', type === 'treble' ? 'Скрипичный ключ' : 'Басовый ключ')
+      clef.setAttribute('aria-label', t(type === 'treble' ? 'Скрипичный ключ' : 'Басовый ключ'))
       div.querySelectorAll('path').forEach(path => clef.append(path))
       group.current.append(clef)
     }
-  }, [])
+  }, [locale])
   return <g ref={group} className="vertical-clefs" />
 }

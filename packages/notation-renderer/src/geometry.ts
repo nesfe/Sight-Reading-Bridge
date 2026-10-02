@@ -9,4 +9,5 @@ export function staffLineColor(bass: boolean, color: number, support: number) {
   const band = `color-mix(in srgb, ${bass ? '#cec4d8' : '#b8d4cb'} ${color * 100}%, #cbd0d3)`
   return `color-mix(in srgb, ${band} ${support * 100}%, #41494d)`
 }
-export const noteName = (step: number) => { const pitch = stepToPitch(step); return `${({ C: 'До', D: 'Ре', E: 'Ми', F: 'Фа', G: 'Соль', A: 'Ля', B: 'Си' })[pitch.letter]} · ${pitch.letter}${pitch.octave}` }
+export const noteName = (step: number) => { const pitch = stepToPitch(step); return `${t(({ C: 'До', D: 'Ре', E: 'Ми', F: 'Фа', G: 'Соль', A: 'Ля', B: 'Си' })[pitch.letter])} · ${pitch.letter}${pitch.octave}` }
+import { t } from '../../i18n/src'

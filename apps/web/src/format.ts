@@ -1,5 +1,4 @@
-const russianPlural = new Intl.PluralRules('ru')
+import { t } from '../../../packages/i18n/src'
 export function noteCount(count: number) {
-  const form = russianPlural.select(count)
-  return `${count} ${form === 'one' ? 'нота' : form === 'few' ? 'ноты' : 'нот'}`
+  return t('noteCount', { count })
 }

@@ -13,7 +13,9 @@ Sight Reading Bridge is a piano sight-reading trainer for the web and desktop. I
 
 ![A right-hand recognition lesson: the vertical grand staff aligns with the piano keyboard, with four practice blocks and a middle-C prompt.](docs/images/recognition-lesson.png)
 
-*The current application, shown in on-screen keyboard demo mode. The interface is currently in Russian.*
+*An English-language recognition lesson, shown in on-screen keyboard demo mode.*
+
+The interface is available in **English and Russian**. The language selector stays visible at the top of every screen, including during practice. Your choice is saved on the device; the first visit follows your browser or system language, with English as the fallback.
 
 ## The Learning Approach
 
@@ -92,6 +94,7 @@ npm run dev
 | `packages/music-core` | Pitch mapping and shared staff/keyboard geometry |
 | `packages/notation-renderer` | Teaching views and conventional notation |
 | `packages/midi-io` | MIDI input, connection handling, and diagnostics |
+| `packages/i18n` | Bundled English/Russian messages and saved language selection |
 | `packages/exercise-engine` | Reproducible exercise generation and session state |
 | `packages/scoring-engine` | Performance metrics and support adjustment |
 | `packages/curriculum` | Typed lessons and visual support settings |

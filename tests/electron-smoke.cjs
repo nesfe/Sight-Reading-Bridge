@@ -13,6 +13,7 @@ async function main() {
     const executablePath = process.env.SRB_PACKAGED_EXECUTABLE
     app = await electron.launch({ executablePath, args: [...(executablePath ? [] : ['.']), `--user-data-dir=${profile}`], env })
     const page = await app.firstWindow()
+    await page.getByRole('button', { name: 'Русский', exact: true }).click()
     const errors = []
     page.on('pageerror', error => errors.push(error.message))
     await expect(page.getByRole('heading', { name: 'Занятия', exact: true })).toBeVisible()
