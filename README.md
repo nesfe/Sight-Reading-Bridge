@@ -6,10 +6,11 @@
 [![Latest release](https://img.shields.io/github/v/release/nesfe/Sight-Reading-Bridge?label=release&color=287d68)](https://github.com/nesfe/Sight-Reading-Bridge/releases/latest)
 [![Desktop platforms](https://img.shields.io/badge/desktop-macOS%20%7C%20Windows%20%7C%20Linux-52636b)](https://github.com/nesfe/Sight-Reading-Bridge/releases/latest)
 [![Web MIDI](https://img.shields.io/badge/input-USB%20%C2%B7%20Web%20MIDI-287d68)](#connect-your-piano)
+[![Active development](https://img.shields.io/badge/status-active%20development-d7a33d)](#project-status)
 
-Sight Reading Bridge is a piano sight-reading trainer for the web and desktop. It connects notes to keys through a visual grand staff, then gradually removes the support as you move toward conventional notation. Play on your own digital piano, receive feedback locally, and keep the sound of your instrument.
+Sight Reading Bridge is an independent piano sight-reading trainer inspired by **Soft Mozart and the Hiner method**. It is being developed as an alternative built around the same educational idea: make the relationship between written notes and piano keys visible, then gradually withdraw that support. Play on your own digital piano, receive feedback locally, and keep the sound of your instrument.
 
-**[Open the web app](https://bridge.82-26-151-8.sslip.io)** · **[Download for desktop](https://github.com/nesfe/Sight-Reading-Bridge/releases/latest)** · **[Русская документация](README.ru.md)**
+**[Download for desktop](https://github.com/nesfe/Sight-Reading-Bridge/releases/latest)** · **[Русская документация](README.ru.md)**
 
 ![A right-hand recognition lesson: the vertical grand staff aligns with the piano keyboard, with four practice blocks and a middle-C prompt.](docs/images/recognition-lesson.png)
 
@@ -17,7 +18,23 @@ Sight Reading Bridge is a piano sight-reading trainer for the web and desktop. I
 
 The interface is available in **English and Russian**. The language selector stays visible at the top of every screen, including during practice. Your choice is saved on the device; the first visit follows your browser or system language, with English as the fallback.
 
-## The Learning Approach
+## Why Turn the Staff?
+
+On a conventional score, pitch rises **up the page**. On a piano, pitch rises **to the right**. A beginner must translate between these two directions while also finding a key and coordinating a hand.
+
+Turning the grand staff **90° clockwise** aligns those directions: lower notes are on the left and higher notes on the right. In the introductory view, each natural note lines up with its white key. Colored bands represent actual staff lines; white spaces remain the positions between them. Giving bands and spaces equal width makes both kinds of position equally visible. Middle C connects the bass and treble regions and retains its short ledger line.
+
+This is a temporary aid for reading notation. The route leads from vertical bands to horizontal bands and finally to a conventional staff. Labels, colors, and highlights can be reduced along the way. The goal is to read unfamiliar written music, including away from the app.
+
+The first lesson includes an interactive introduction: turn the staff, try C4–D4–E4 on the screen or a USB piano, and compare the same pitch in all three views. It is ungraded, skippable, and can be reopened from the first lesson.
+
+![The interactive introduction: the rotated grand staff places middle C directly above its piano key.](docs/images/staff-introduction.png)
+
+## Inspiration and Approach
+
+[Soft Mozart's explanation of its teaching notation](https://www.softmozart.com/curriculum/eyenotes-sheet-music.html) describes this visual connection, equal-width lines and spaces, and the gradual return to conventional notation. Our [methodology](docs/source-methodology.md) uses these principles as its starting point.
+
+Sight Reading Bridge is an independent implementation, not an official Soft Mozart edition or an affiliated product. It has its own interface and generated exercises. The current emphasis is an adult learning path, separate recognition and reading-ahead practice, USB-MIDI feedback, and local progress records; it does not reproduce the complete Soft Mozart course or claim equivalent learning outcomes.
 
 Reading a score combines pitch recognition, keyboard navigation, rhythm, and looking ahead. Sight Reading Bridge introduces these demands in stages, giving each skill room to develop.
 
@@ -39,10 +56,6 @@ Labels, color, staff width, and key highlights can be adjusted independently. Re
 
 ## Get Started
 
-### In Your Browser
-
-Open the [web app](https://bridge.82-26-151-8.sslip.io) in Chrome or Edge. Connect a USB-MIDI piano and allow MIDI access when prompted. To explore without an instrument, enable the on-screen keyboard demo; demo attempts do not count toward course completion.
-
 ### On Your Desktop
 
 Download an installer from [GitHub Releases](https://github.com/nesfe/Sight-Reading-Bridge/releases/latest). No local compilation or developer tools are required.
@@ -54,7 +67,9 @@ Download an installer from [GitHub Releases](https://github.com/nesfe/Sight-Read
 | Windows, x64 | `win-x64.exe` |
 | Linux, x64 | `.AppImage`, `.deb`, or `.rpm` |
 
-Current desktop releases are unsigned, and macOS builds are not notarized. Gatekeeper or SmartScreen may warn or block the first launch. The web app is available without installation.
+Current desktop releases are unsigned, and macOS builds are not notarized. Gatekeeper or SmartScreen may warn or block the first launch.
+
+There is no public hosted demo. The browser interface remains in the repository for local development and self-hosting. To explore the desktop app without an instrument, enable the on-screen keyboard demo; demo attempts do not count toward course completion.
 
 ### Connect Your Piano
 
@@ -72,7 +87,7 @@ PDF, MIDI files, MusicXML timewise, and native notation-editor formats are not s
 
 ## Project Status
 
-Sight Reading Bridge is in active development. The current release provides a working adult practice path; the full proposed curriculum is still being developed. Generated exercises are currently single-voice and use natural notes. Ear training, pedal assessment, and a complete rhythm curriculum are not yet included. View changes are immediate rather than animated rotations.
+Sight Reading Bridge is in active development. The current release provides a working adult practice path; the full proposed curriculum is still being developed. Generated exercises are currently single-voice and use natural notes. Ear training, pedal assessment, and a complete rhythm curriculum are not yet included. The introduction animates the staff rotation; lesson presentation controls still switch views directly.
 
 The project draws on the idea of gradually withdrawing visual support. Its practice thresholds are configurable training choices, not validated learning standards. The [methodology](docs/source-methodology.md) and [notation design notes](docs/notation-decisions.md), both in Russian, explain the rationale and distinguish the longer-term plan from the current implementation.
 
@@ -86,6 +101,8 @@ Node.js 24 is required for development. Desktop installers do not require Node.j
 npm ci
 npm run dev
 ```
+
+For browser-only local development, use `npm run dev:renderer`. The development server binds to loopback, not a public network interface. Chrome or Edge is required for the intended Web MIDI workflow. A remotely hosted browser build requires HTTPS.
 
 | Directory | Purpose |
 | --- | --- |

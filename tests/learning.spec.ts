@@ -2,6 +2,10 @@ import { expect, test, type Page } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 import { strToU8, zipSync } from 'fflate'
 
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('srb-staff-intro-v1', 'seen'))
+})
+
 async function mockMidi(page: Page) {
   await page.addInitScript(() => {
     let listener: ((event: { data: Uint8Array; timeStamp: number }) => void) | null = null

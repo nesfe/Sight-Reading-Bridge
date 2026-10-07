@@ -31,6 +31,8 @@ async function main() {
     else await expect(page.locator('.connection-strip')).toContainText('USB-MIDI устройство не найдено')
     await page.getByRole('checkbox').check()
     await page.getByRole('button', { name: 'Начать занятие' }).click()
+    await expect(page.getByRole('heading', { name: 'Один звук, два направления' })).toBeVisible()
+    await page.getByRole('button', { name: 'Пропустить вступление' }).click()
     await expect(page.locator('.run-score [data-note-step]')).toHaveCount(1)
     await mkdir('output/playwright', { recursive: true })
     await page.screenshot({ path: 'output/playwright/electron.png' })

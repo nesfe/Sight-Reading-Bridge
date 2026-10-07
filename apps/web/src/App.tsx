@@ -1,7 +1,9 @@
 import { getLocale, subscribeLocale, t } from '../../../packages/i18n/src'
 import { LanguageControl } from './LanguageControl'
+import { StaffIntro } from './StaffIntro'
+import { hasSeenIntro, rememberIntro } from './introState'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
-import { ArrowLeft, ArrowRight, Check, ChevronRight, Download, FileMusic, FileUp, History, Keyboard, LayoutList, Pause, Piano, Play, RotateCcw, Settings, Usb } from 'lucide-react'
+import { ArrowLeft, ArrowRight, BookOpen, Check, ChevronRight, Download, FileMusic, FileUp, History, Keyboard, LayoutList, Pause, Piano, Play, RotateCcw, Settings, Usb } from 'lucide-react'
 import { lessons, type Lesson, type Scaffold } from '../../../packages/curriculum/src'
 import { recognitionPlan } from '../../../packages/curriculum/src/recognition'
 import { generate } from '../../../packages/exercise-engine/src'
@@ -30,22 +32,29 @@ export default function App() {
   const [tempo, setTempo] = useState(lessons[0].tempo)
   const [demo, setDemo] = useState(false)
   const [run, setRun] = useState<Run | null>(null)
+  const [intro, setIntro] = useState<'start' | 'explore' | null>(null)
+  const [introSeen, setIntroSeen] = useState(hasSeenIntro)
   const [history, setHistory] = useState<ProgressRecord[]>([])
   const [storageError, setStorageError] = useState('')
   const device = useSyncExternalStore(midi.subscribe, midi.getSnapshot)
   const importFile = useRef<HTMLInputElement>(null)
   function refreshHistory() { void read().then(setHistory).catch(() => setStorageError('Не удалось прочитать сохранённый прогресс.')) }
   useEffect(() => { refreshHistory() }, [])
-  const choose = useCallback((next: Lesson) => { run?.session.pause(performance.now()); setRun(null); setLesson(next); setScaffold(next.scaffold); setTempo(next.tempo); setView('lessons'); refreshHistory() }, [run])
+  const choose = useCallback((next: Lesson) => { run?.session.pause(performance.now()); setRun(null); setIntro(null); setLesson(next); setScaffold(next.scaffold); setTempo(next.tempo); setView('lessons'); refreshHistory() }, [run])
   const preview = useMemo(() => new Session(generate(lesson, 1), false, tempo), [lesson, tempo])
-  function start(repeat?: Run) {
+  function start(repeat?: Run, bypassIntro = false) {
+    if (lesson.id === lessons[0].id && !repeat && !introSeen && !bypassIntro) { setIntro('start'); return }
     run?.session.pause(performance.now())
     const seed = repeat?.seed ?? crypto.getRandomValues(new Uint32Array(1))[0]
     const current = { ...lesson, tempo }
     setRun({ id: crypto.randomUUID(), created: Date.now(), seed, repeat: repeat ? repeat.repeat + 1 : 0,
       lesson: current, scaffold, demo, session: new Session(generate(current, seed), current.kind === 'ahead', tempo) })
   }
-  function navigate(next: typeof view) { run?.session.pause(performance.now()); setView(next); refreshHistory() }
+  function finishIntro() {
+    rememberIntro(); setIntroSeen(true); setIntro(null)
+    if (intro === 'start' && (demo || device.status === 'ready')) start(undefined, true)
+  }
+  function navigate(next: typeof view) { run?.session.pause(performance.now()); setIntro(null); setView(next); refreshHistory() }
   const passed = (item: Lesson) => history.some(record => record.lessonId === item.id && record.completed && !record.demo && (item.kind !== 'flash' || hasFullCoverage(record.attempts, item.count)) && (summarize(record.attempts).accuracy ?? 0) >= item.accuracy)
   const done = lessons.filter(passed).length
 
@@ -64,11 +73,11 @@ export default function App() {
       <a className="download-link" href="https://github.com/nesfe/Sight-Reading-Bridge/releases/latest" target="_blank" rel="noreferrer"><Download size={16} /> {t("Приложение для компьютера")}</a>
     </aside>
     <main>
-      <header className="page-header"><div><span className="eyebrow">{t("ЧТЕНИЕ С ЛИСТА")}</span><h1>{{ lessons: t("Занятия"), library: t("Библиотека"), progress: t("Прогресс"), device: t("Инструмент") }[view]}</h1></div><span className="edition">{t("Взрослый маршрут · 01")}</span></header>
+      {!intro && <header className="page-header"><div><span className="eyebrow">{t("ЧТЕНИЕ С ЛИСТА")}</span><h1>{{ lessons: t("Занятия"), library: t("Библиотека"), progress: t("Прогресс"), device: t("Инструмент") }[view]}</h1></div><span className="edition">{t("Взрослый маршрут · 01")}</span></header>}
       {storageError && <p role="alert" className="notice error">{t(storageError)}</p>}
       {view === 'library' && <Suspense fallback={<p role="status">{t("Открытие библиотеки…")}</p>}><Library/></Suspense>}
       {view === 'lessons' && <>
-        {!run ? <div className="lesson-layout">
+        {intro ? <StaffIntro onFinish={finishIntro}/> : !run ? <div className="lesson-layout">
           <section className="lesson-list" aria-label={t("Учебный маршрут")}>{lessons.map((item, index) => <div key={item.id}>
             {(index === 0 || item.group !== lessons[index - 1].group) && <h2>{t(item.group)}</h2>}
             <button className={`lesson-row ${lesson.id === item.id ? 'active' : ''}`} onClick={() => choose(item)}><span className="lesson-number">{passed(item) ? <Check size={17} /> : String(index + 1).padStart(2, '0')}</span><span>{t(item.title)}<small>{t(handName[item.hands])} · {noteCount(item.count)}</small></span><ChevronRight size={17} /></button>
@@ -77,6 +86,7 @@ export default function App() {
             <div className="lesson-heading"><div><span className="eyebrow">{t("СТАДИЯ")} {lesson.stage}</span><h2>{t(lesson.title)}</h2></div><button className="primary start" disabled={!demo && device.status !== 'ready'} onClick={() => start()}><Play size={18}/> {t("Начать занятие")}</button></div>
             <div className="lesson-facts"><span>{t(handName[lesson.hands])}</span><span>{noteCount(lesson.count)}</span><span>{lesson.kind === 'ahead' ? t('{{notes}} вперёд', { notes: noteCount(lesson.horizon) }) : t("Без ограничения времени")}</span></div>
             {lesson.kind === 'flash' && <LessonBlocks lesson={lesson}/>}
+            {lesson.id === lessons[0].id && <div className="intro-entry"><button onClick={() => setIntro('explore')}><BookOpen size={17}/>{t('Почему стан повёрнут?')}</button><span>{t('Короткое интерактивное знакомство перед первым уроком')}</span></div>}
             <div className="connection-strip"><Usb size={18}/><span>{device.status === 'ready' ? device.message : t(device.message)}</span>{device.status !== 'ready' && <button onClick={() => void midi.connect()} disabled={device.status === 'connecting'}>{t("Подключить")}</button>}</div>
             <div className="lesson-preview"><ScoreLegend scaffold={scaffold}/><Score session={preview} scaffold={scaffold} kind={lesson.kind === 'patterns' ? 'patterns' : 'flash'} horizon={0} cursor={0} held={[]} onDown={() => {}} onUp={() => {}} /></div>
             <PresentationControl scaffold={scaffold} onChange={setScaffold}/>

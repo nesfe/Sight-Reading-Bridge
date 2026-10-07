@@ -147,7 +147,7 @@ function Horizontal({ notes, allNotes, cursor, scaffold, timed, horizon }: { not
   return <div className="standard-score" ref={container} />
 }
 
-function VerticalClefs() {
+export function VerticalClefs({ size = 32 }: { size?: number }) {
   const group = useRef<SVGGElement>(null)
   const locale = getLocale()
   useEffect(() => {
@@ -156,13 +156,13 @@ function VerticalClefs() {
     for (const [type, step] of [['treble', 4], ['bass', -4]] as const) {
       const div = document.createElement('div')
       const renderer = new Renderer(div, Renderer.Backends.SVG)
-      Glyph.renderGlyph(renderer.getContext(), 0, 0, 32, Clef.types[type].code)
+      Glyph.renderGlyph(renderer.getContext(), 0, 0, size, Clef.types[type].code)
       const clef = document.createElementNS('http://www.w3.org/2000/svg', 'g')
       clef.setAttribute('transform', `translate(${whiteKeyCenterX(step, keyboard)},58) rotate(90)`)
       clef.setAttribute('aria-label', t(type === 'treble' ? 'Скрипичный ключ' : 'Басовый ключ'))
       div.querySelectorAll('path').forEach(path => clef.append(path))
       group.current.append(clef)
     }
-  }, [locale])
+  }, [locale, size])
   return <g ref={group} className="vertical-clefs" />
 }

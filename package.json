@@ -1,7 +1,7 @@
 {
   "name": "sight-reading-bridge",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Progressive Electron piano sight-reading trainer with Web MIDI support.",
   "author": {
     "name": "nesfe",
@@ -17,7 +17,7 @@
   ],
   "scripts": {
     "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\"",
-    "dev:renderer": "vite --host 0.0.0.0",
+    "dev:renderer": "vite --host 127.0.0.1",
     "dev:electron": "wait-on http://127.0.0.1:5173 && electron . --development",
     "build": "tsc -b && vite build",
     "test": "vitest run",
