@@ -1,0 +1,39 @@
+Sight Reading Bridge - Advanced repertoire collection
+
+31 scores from the dacapo project, pinned to revision:
+9d22701fb714ed6b3b4e8118f6337965bc54e1a9
+https://github.com/ya-luotao/dacapo/tree/9d22701fb714ed6b3b4e8118f6337965bc54e1a9/src/pieces/library
+
+The MusicXML files are redistributed unchanged. Course ordering, translated
+display titles and pedagogical grouping were added by Sight Reading Bridge.
+Original composer, edition, encoder and rights fields are retained in each
+MusicXML file. Complete metadata and SHA-256 hashes are in
+packages/repertoire/catalog.json in the source repository.
+
+28 encodings (including arrangements/chord symbols where indicated):
+Copyright (c) 2026 The dacapo authors. MIT License.
+The full notice is included in repertoire-licenses/dacapo-MIT.txt.
+
+Three CC0 1.0 encodings distributed through the PDMX dataset:
+- Burgmuller, Arabesque: PianoXML; fingering removed by dacapo.
+  https://musescore.com/user/9292486/scores/5849868
+- Schumann, Soldiers' March: jadr; fingering removed by dacapo.
+  https://musescore.com/user/31901603/scores/5860733
+- Bach, Prelude in C, BWV 846: OpenGoldberg / Open Well-Tempered Clavier.
+  https://musescore.com/user/9836/scores/719631
+CC0: https://creativecommons.org/publicdomain/zero/1.0/
+
+PDMX dataset: CC BY 4.0, Phillip Long, Zachary Novack, Julian McAuley,
+Taylor Berg-Kirkpatrick (2025).
+https://doi.org/10.5281/zenodo.15571083
+https://creativecommons.org/licenses/by/4.0/
+Long et al., PDMX: A Large-Scale Public Domain MusicXML Dataset for
+Symbolic Music Processing, ICASSP 2025, doi:10.1109/ICASSP49660.2025.10890217.
+Xu et al., Generating Symbolic Music from Natural Language Prompts using
+an LLM-Enhanced Dataset, arXiv:2410.02084 (2024).
+The full CC0 and CC BY texts are in repertoire-licenses/.
+
+Historical compositions and modern encodings have distinct provenance.
+See the source-edition links for each work in the application. Inclusion
+does not imply endorsement by any composer, editor, project or rights holder.
+No other application's code, artwork or sound recordings are included.

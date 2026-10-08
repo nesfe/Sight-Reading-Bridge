@@ -1,23 +1,24 @@
-## 0.5.1 · Clearer Project Identity
+## 0.6.0 · From Exercises to Music
 
-Download an installer below. Apple Silicon Macs, including M4, use `mac-arm64.dmg`. No local compilation is required. The temporary public preview has been retired.
+Download an installer below. Apple Silicon Macs, including M4, use `mac-arm64.dmg`. No compilation or developer tools are required. There is no public hosted preview.
 
-### Changes
+### Advanced Course
 
-- An interactive introduction before the first lesson: see the staff turn 90° clockwise, try C4–D4–E4 on the on-screen keyboard or a USB piano, and compare the same pitch across three notation views.
-- The introduction is ungraded, can be skipped or revisited, and remembers completion locally. It supports English, Russian, keyboard navigation, and reduced-motion preferences.
-- Documentation explains the staff-to-keyboard connection and the gradual return to conventional notation. Public Soft Mozart materials are acknowledged as a design reference, separately from the project's own description.
-- Revised English/Russian documentation and introduction text clarify the project's independence. No affiliation, sponsorship, endorsement, licensed course implementation, or equivalent learning outcomes are claimed.
-- Planning notes now describe this project's requirements instead of making unsupported comparisons with other products. This editorial update is not a legal clearance or a review of patent rights.
-- An active-development badge and clearer project status.
-- Public hosting and its autostart services are disabled. Server links have been removed from the current documentation, About, and published release descriptions. Development servers bind to loopback by default.
+- 31 bundled MusicXML scores in five sections, available offline in the desktop app.
+- Eight single-line melodies, followed by two-hand pieces by Türk, Beyer, Czerny, Petzold, Schumann, Burgmüller, Tchaikovsky and others.
+- Vertical equal-width bands, horizontal bands, and standard notation for every piece. Natural-note positions and white keys share the same geometry.
+- Right-hand, left-hand and two-hand MIDI practice where the score contains those parts. Switching presentation or interface language preserves the current playing position.
+- Local completed-attempt records and course progress. Screen-keyboard demo passes do not earn MIDI credit.
+- English/Russian titles, search, section filters, source links and individual MusicXML downloads.
 
-### Verification
+### Sources
 
-Automated checks cover the introduction, note/key alignment, lesson flow, MIDI input, language switching, MusicXML import, and narrow-screen layout. All teaching and MIDI logic runs locally.
+The collection is taken from the open dacapo repertoire at revision `9d22701fb714ed6b3b4e8118f6337965bc54e1a9`: 28 MIT-licensed encodings and three CC0 encodings via PDMX, according to its source documentation. MusicXML files are unchanged. Source editions, encoder attribution, license texts and SHA-256 hashes are included.
 
-### Current Limitations
+### Scope
 
-Desktop installers are unsigned; macOS builds are not notarized. Gatekeeper or SmartScreen may warn or block the first launch.
+The main route targets the early years of piano study, not an accredited grade 1–3 syllabus. The final three pieces by Satie, Chopin and Bach are optional harder challenges. *Ode to Joy* is a theme arrangement and *Für Elise* is the A section.
 
-Imported scores support horizontal views and pitch following, without rhythm or pedal grading or course-history integration. Generated exercises remain single-voice. Physical key-to-screen latency on a Kawai CA701/M4 has not been measured. See the README for the current scope.
+Following checks pitch and chord attacks, not rhythm, releases, pedal or expression. Repeats are not expanded; grace notes are skipped. The vertical teaching window shows four positions; the standard score provides the fuller engraving. Arbitrary imported scores still use horizontal views. Advanced records are stored separately from the trainer's JSON export.
+
+Desktop installers are unsigned and macOS builds are not notarized. Physical Kawai CA701/M4 key-to-screen latency has not been measured. MIDI processing remains local, with no per-note server request and no software audio.

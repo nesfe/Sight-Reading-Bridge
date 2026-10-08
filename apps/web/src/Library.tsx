@@ -7,6 +7,9 @@ import { deleteScore, listScores, saveScore, type LibraryScore } from '../../../
 import { ScoreFollower } from '../../../packages/score-import/src/follow'
 import { ScoreDisplayController } from '../../../packages/score-import/src/model'
 import { midi } from '../../../packages/midi-io/src'
+import { teachingFrames, type TeachingFrame } from '../../../packages/score-import/src/teaching'
+import { RepertoireVertical } from '../../../packages/notation-renderer/src/RepertoireVertical'
+import type { CourseRecord } from '../../../packages/repertoire/progress'
 
 const message = (error: unknown) => error instanceof Error ? error.message : 'Не удалось открыть партитуру.'
 
@@ -45,11 +48,14 @@ export default function Library() {
   </section>
 }
 
-function ScoreDocument({ score }: { score: LibraryScore }) {
+export function ScoreDocument({ score, course }: { score: LibraryScore; course?: { solo: boolean; onComplete: (result: Omit<CourseRecord, 'id' | 'piece' | 'created'>) => void } }) {
   const container = useRef<HTMLDivElement>(null)
   const [loaded, setLoaded] = useState<ScoreDisplayController | null>(null)
   const [error, setError] = useState('')
   const [bands, setBands] = useState(false)
+  const [vertical, setVertical] = useState(Boolean(course))
+  const [frames, setFrames] = useState<TeachingFrame[]>([])
+  const [demo, setDemo] = useState(false)
   const [zoom, setZoom] = useState(1)
   const [part, setPart] = useState(0)
   const [staff, setStaff] = useState(-1)
@@ -70,12 +76,15 @@ function ScoreDocument({ score }: { score: LibraryScore }) {
       display.render()
       if (!display.Sheet.SourceMeasures.length || !div.querySelector('svg')) throw new Error('В файле нет отображаемой партитуры.')
       const controller = new ScoreDisplayController(display)
-      const result = controller.prepare(0, -1)
+      if (course) setFrames(teachingFrames(display, 0))
+      const initialStaff = course?.solo ? display.Sheet.Instruments[0].Staves[0].Id : -1
+      setStaff(initialStaff)
+      const result = controller.prepare(0, initialStaff)
       setPractice({ follower: new ScoreFollower(result.groups), warning: result.warning })
       setLoaded(controller)
     }).catch(error => { if (!cancelled) setError(message(error)) })
     return () => { cancelled = true; display.clear(); div.remove() }
-  }, [score.xml])
+  }, [score.xml]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!loaded || !container.current) return
     const host = container.current
@@ -96,7 +105,7 @@ function ScoreDocument({ score }: { score: LibraryScore }) {
     })
     observer.observe(host)
     return () => { clearTimeout(timer); observer.disconnect() }
-  }, [loaded, bands, zoom])
+  }, [loaded, bands, zoom, vertical])
   const instruments = loaded?.display.Sheet.Instruments ?? []
   const staves = instruments[part]?.Staves ?? []
   function changePart(value: number, nextStaff = -1) {
@@ -107,38 +116,52 @@ function ScoreDocument({ score }: { score: LibraryScore }) {
   }
   return <>
     <div className="score-document-toolbar">
-      <div className="notation-tabs" role="radiogroup" aria-label={t("Вид импортированной партитуры")}><button role="radio" aria-checked={bands} onClick={() => setBands(true)}><Rows3 size={17}/> {t("Полосы")}</button><button role="radio" aria-checked={!bands} onClick={() => setBands(false)}><Music2 size={17}/> {t("Нотный стан")}</button></div>
-      <div className="zoom-control"><button className="icon-button" aria-label={t("Уменьшить партитуру")} title={t("Уменьшить")} disabled={zoom <= 0.6} onClick={() => setZoom(value => Math.max(0.6, value - 0.1))}><Minus size={17}/></button><output>{Math.round(zoom * 100)}%</output><button className="icon-button" aria-label={t("Увеличить партитуру")} title={t("Увеличить")} disabled={zoom >= 1.6} onClick={() => setZoom(value => Math.min(1.6, value + 0.1))}><Plus size={17}/></button></div>
+      <div className="notation-tabs" role="radiogroup" aria-label={t("Вид импортированной партитуры")}>
+        {course && <button role="radio" aria-checked={vertical} onClick={() => setVertical(true)}><Rows3 size={17} style={{ transform: 'rotate(90deg)' }}/>{t('Вертикальные полосы')}</button>}
+        <button role="radio" aria-checked={bands && !vertical} onClick={() => { setVertical(false); setBands(true) }}><Rows3 size={17}/> {t("Полосы")}</button><button role="radio" aria-checked={!bands && !vertical} onClick={() => { setVertical(false); setBands(false) }}><Music2 size={17}/> {t("Нотный стан")}</button></div>
+      {!vertical && <div className="zoom-control"><button className="icon-button" aria-label={t("Уменьшить партитуру")} title={t("Уменьшить")} disabled={zoom <= 0.6} onClick={() => setZoom(value => Math.max(0.6, value - 0.1))}><Minus size={17}/></button><output>{Math.round(zoom * 100)}%</output><button className="icon-button" aria-label={t("Увеличить партитуру")} title={t("Увеличить")} disabled={zoom >= 1.6} onClick={() => setZoom(value => Math.min(1.6, value + 0.1))}><Plus size={17}/></button></div>}
       <button className="icon-button" title={t("Скачать MusicXML")} aria-label={t("Скачать MusicXML")} onClick={() => { const url = URL.createObjectURL(new Blob([score.xml], { type: 'application/vnd.recordare.musicxml+xml' })); const a = document.createElement('a'); a.href = url; a.download = score.filename.replace(/\.(xml|musicxml|mxl)$/i, '.musicxml'); a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000) }}><Download size={17}/></button>
     </div>
     {error && <p role="alert" className="notice error">{t(error)}</p>}
     {!loaded && !error && <p role="status" className="notice">{t("Подготовка партитуры…")}</p>}
-    {loaded && <div className="score-part-controls"><label>{t("Партия MIDI")}<select value={part} onChange={event => changePart(Number(event.target.value))}>{instruments.map((instrument, index) => <option key={index} value={index}>{instrument.Name || t('Партия {{number}}', { number: index + 1 })}</option>)}</select></label>{staves.length > 1 && <label>{t("Нотный стан")}<select value={staff} onChange={event => changePart(part, Number(event.target.value))}><option value={-1}>{t("Все станы партии")}</option>{staves.map((item, index) => <option key={item.Id} value={item.Id}>{t("Стан")} {index + 1}</option>)}</select></label>}</div>}
-    {practice && loaded && <Following key={`${part}:${staff}`} loaded={loaded} follower={practice.follower} warning={practice.warning}/>}
-    <div className="imported-score-scroll"><div className="imported-score" aria-label={t("Импортированная партитура")} ref={container}/></div>
+    {loaded && (course ? <div className="score-part-controls"><div className="notation-tabs" role="radiogroup" aria-label={t('Руки')}>
+      {[{ value: staves[0]?.Id, label: 'Правая рука' }, { value: staves[1]?.Id, label: 'Левая рука' }, { value: -1, label: 'Обе руки' }].map(item => <button key={item.label} role="radio" aria-checked={staff === item.value} disabled={item.value === undefined || (course.solo && item.value !== staves[0]?.Id)} onClick={() => changePart(0, item.value)}>{t(item.label)}</button>)}
+    </div><label className="check-option"><input type="checkbox" checked={demo} onChange={event => { practice?.follower.reset(); setDemo(event.target.checked) }}/>{t('Экранная клавиатура · пробный режим')}</label></div> : <div className="score-part-controls"><label>{t("Партия MIDI")}<select value={part} onChange={event => changePart(Number(event.target.value))}>{instruments.map((instrument, index) => <option key={index} value={index}>{instrument.Name || t('Партия {{number}}', { number: index + 1 })}</option>)}</select></label>{staves.length > 1 && <label>{t("Нотный стан")}<select value={staff} onChange={event => changePart(part, Number(event.target.value))}><option value={-1}>{t("Все станы партии")}</option>{staves.map((item, index) => <option key={item.Id} value={item.Id}>{t("Стан")} {index + 1}</option>)}</select></label>}</div>)}
+    {practice && loaded && <Following key={`${part}:${staff}:${demo}`} loaded={loaded} follower={practice.follower} warning={practice.warning} demo={demo} vertical={course ? { frames, staff, staves: staves.map(item => item.Id), keyboardOnly: !vertical } : undefined} onComplete={course ? (errors, groups) => course.onComplete({ errors, groups, demo, hand: staff === -1 ? 'both' : staff === staves[0]?.Id ? 'right' : 'left', view: vertical ? 'vertical' : bands ? 'bands' : 'standard' }) : undefined}/>}
+    <div className={`imported-score-scroll ${vertical ? 'course-score-hidden' : ''}`}><div className="imported-score" aria-label={t("Импортированная партитура")} ref={container}/></div>
   </>
 }
 
-function Following({ loaded, follower, warning }: { loaded: ScoreDisplayController; follower: ScoreFollower; warning: string }) {
+function Following({ loaded, follower, warning, demo = false, vertical, onComplete }: { loaded: ScoreDisplayController; follower: ScoreFollower; warning: string; demo?: boolean; vertical?: { frames: TeachingFrame[]; staff: number; staves: number[]; keyboardOnly: boolean }; onComplete?: (errors: number, groups: number) => void }) {
   const state = useSyncExternalStore(follower.subscribe, follower.getSnapshot)
   const device = useSyncExternalStore(midi.subscribe, midi.getSnapshot)
+  const completion = useRef(onComplete)
+  const saved = useRef(false)
+  useEffect(() => { completion.current = onComplete }, [onComplete])
+  useEffect(() => {
+    if (state.status !== 'completed') { saved.current = false; return }
+    if (!saved.current) { saved.current = true; completion.current?.(state.errors, follower.groups.length) }
+  }, [state.status, state.errors, follower])
   useEffect(() => {
     const update = () => loaded.move(follower)
     update()
     const offChange = follower.subscribe(update)
-    const offMidi = midi.onNote(event => { if (event.type === 'on') follower.noteOn(event.midi); else follower.noteOff(event.midi) })
+    const offMidi = midi.onNote(event => { if (demo) return; if (event.type === 'on') follower.noteOn(event.midi); else follower.noteOff(event.midi) })
     const offDisconnect = midi.onDisconnect(follower.pause)
     const hide = () => { if (document.hidden) follower.pause() }
     document.addEventListener('visibilitychange', hide); window.addEventListener('blur', follower.pause)
     return () => { offChange(); offMidi(); offDisconnect(); document.removeEventListener('visibilitychange', hide); window.removeEventListener('blur', follower.pause); follower.pause() }
-  }, [loaded, follower])
+  }, [loaded, follower, demo])
   return <div className="score-following">
     {warning && <p className="notice">{t(warning)}</p>}
     <div className="following-toolbar">
-      {device.status !== 'ready' ? <button onClick={() => void midi.connect()} disabled={device.status === 'connecting'}><Usb size={17}/> {t("Подключить MIDI")}</button> : <button className="primary" disabled={!follower.groups.length || state.status === 'completed'} onClick={() => state.status === 'running' ? follower.pause() : follower.start()}>{state.status === 'running' ? <Pause size={17}/> : <Play size={17}/>} {state.status === 'running' ? t("Пауза") : state.status === 'paused' ? t("Продолжить") : t("Начать чтение")}</button>}
+      {device.status !== 'ready' && !demo ? <button onClick={() => void midi.connect()} disabled={device.status === 'connecting'}><Usb size={17}/> {t("Подключить MIDI")}</button> : <button className="primary" disabled={!follower.groups.length || state.status === 'completed'} onClick={() => state.status === 'running' ? follower.pause() : follower.start()}>{state.status === 'running' ? <Pause size={17}/> : <Play size={17}/>} {state.status === 'running' ? t("Приостановить") : state.status === 'paused' ? t("Продолжить") : t("Начать чтение")}</button>}
       <button className="icon-button" title={t("Сначала")} aria-label={t("Сначала")} onClick={follower.reset}><RotateCcw size={17}/></button>
       <span role="status">{t(state.feedback)}</span><span className="follow-position">{state.index} / {follower.groups.length}</span>
     </div>
     <div className="session-footer"><span>{t("Высота · без оценки ритма · без повторов")}</span><span>{t("Такт")} {follower.groups[state.index]?.measure ?? follower.groups.at(-1)?.measure ?? '—'}</span><span>{t("Ошибки:")} {state.errors}</span></div>
+    {vertical && (!vertical.keyboardOnly || demo) && (
+      <RepertoireVertical {...vertical} position={follower.groups[state.index]?.position ?? follower.groups.at(-1)?.position ?? 0} held={state.held} onDown={note => { if (demo) follower.noteOn(note) }} onUp={note => { if (demo) follower.noteOff(note) }}/>
+    )}
   </div>
 }

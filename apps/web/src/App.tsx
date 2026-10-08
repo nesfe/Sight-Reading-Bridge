@@ -18,6 +18,7 @@ import './App.css'
 import { LessonBlocks, PitchResults } from './RecognitionProgress'
 import { noteCount } from './format'
 const Library = lazy(() => import('./Library'))
+const Repertoire = lazy(() => import('./Repertoire'))
 
 type Run = { id: string; created: number; seed: number; repeat: number; lesson: Lesson; scaffold: Scaffold; demo: boolean; session: Session }
 const percent = (value: number | null) => value === null ? '—' : `${Math.round(value * 100)}%`
@@ -26,7 +27,7 @@ const handName = { right: 'Правая рука', left: 'Левая рука', 
 
 export default function App() {
   useSyncExternalStore(subscribeLocale, getLocale)
-  const [view, setView] = useState<'lessons' | 'library' | 'progress' | 'device'>('lessons')
+  const [view, setView] = useState<'lessons' | 'repertoire' | 'library' | 'progress' | 'device'>('lessons')
   const [lesson, setLesson] = useState(lessons[0])
   const [scaffold, setScaffold] = useState<Scaffold>(lessons[0].scaffold)
   const [tempo, setTempo] = useState(lessons[0].tempo)
@@ -64,6 +65,7 @@ export default function App() {
       <a className="brand" href="#" onClick={e => { e.preventDefault(); navigate('lessons') }}><Piano size={30} /><span>Sight Reading<strong>Bridge</strong></span></a>
       <nav aria-label={t("Основная навигация")}>
         <button aria-label={t("Занятия")} className={view === 'lessons' ? 'selected' : ''} onClick={() => navigate('lessons')}><LayoutList size={19} /> {t("Занятия")}</button>
+        <button aria-label={t('Курс Advanced')} className={view === 'repertoire' ? 'selected' : ''} onClick={() => navigate('repertoire')}><BookOpen size={19}/>{t('Курс Advanced')}</button>
         <button aria-label={t("Библиотека")} className={view === 'library' ? 'selected' : ''} onClick={() => navigate('library')}><FileMusic size={19} /> {t("Библиотека")}</button>
         <button aria-label={t("Прогресс")} className={view === 'progress' ? 'selected' : ''} onClick={() => navigate('progress')}><History size={19} /> {t("Прогресс")}</button>
         <button aria-label={t("Инструмент")} className={view === 'device' ? 'selected' : ''} onClick={() => navigate('device')}><Usb size={19} /> {t("Инструмент")}</button>
@@ -73,9 +75,10 @@ export default function App() {
       <a className="download-link" href="https://github.com/nesfe/Sight-Reading-Bridge/releases/latest" target="_blank" rel="noreferrer"><Download size={16} /> {t("Приложение для компьютера")}</a>
     </aside>
     <main>
-      {!intro && <header className="page-header"><div><span className="eyebrow">{t("ЧТЕНИЕ С ЛИСТА")}</span><h1>{{ lessons: t("Занятия"), library: t("Библиотека"), progress: t("Прогресс"), device: t("Инструмент") }[view]}</h1></div><span className="edition">{t("Взрослый маршрут · 01")}</span></header>}
+      {!intro && <header className="page-header"><div><span className="eyebrow">{t("ЧТЕНИЕ С ЛИСТА")}</span><h1>{{ lessons: t("Занятия"), repertoire: t('Курс Advanced'), library: t("Библиотека"), progress: t("Прогресс"), device: t("Инструмент") }[view]}</h1></div><span className="edition">{t("Взрослый маршрут · 01")}</span></header>}
       {storageError && <p role="alert" className="notice error">{t(storageError)}</p>}
       {view === 'library' && <Suspense fallback={<p role="status">{t("Открытие библиотеки…")}</p>}><Library/></Suspense>}
+      {view === 'repertoire' && <Suspense fallback={<p role="status">{t('Подготовка партитуры…')}</p>}><Repertoire/></Suspense>}
       {view === 'lessons' && <>
         {intro ? <StaffIntro onFinish={finishIntro}/> : !run ? <div className="lesson-layout">
           <section className="lesson-list" aria-label={t("Учебный маршрут")}>{lessons.map((item, index) => <div key={item.id}>

@@ -51,6 +51,7 @@ Labels, color, staff width, and key highlights can be adjusted independently. Re
 - **A structured adult learning path.** Twelve lessons cover note recognition, melodic patterns, generated reading material, and reading ahead.
 - **Complete note coverage.** Right-hand recognition includes 115 prompts; left-hand recognition includes 132. Every note in these lessons appears at least 15 times, across range practice, neighboring positions, shuffled sets, and a final check.
 - **Progress you can inspect.** Review first-attempt accuracy, errors, and median reaction time for each note. Practice blocks include breaks, which are excluded from active practice time.
+- **An Advanced repertoire course.** Thirty-one bundled pieces follow the trainer, from single melodies to two-hand piano music. Practice either hand or both, using vertical bands, horizontal bands, or a conventional score.
 - **Your own sheet music.** Import MusicXML or compressed MXL, view a full score, select a part or staff, and follow it with MIDI pitch feedback, including chords and tied notes.
 - **Local storage.** Lesson history and imported scores stay on your device. Export and import progress as JSON; manage scores in a local library. Web and desktop storage are separate.
 
@@ -85,6 +86,24 @@ Imported scores support horizontal bands and standard notation. MIDI following c
 
 PDF, MIDI files, MusicXML timewise, and native notation-editor formats are not supported. Export MusicXML partwise from your notation editor to use a score here. See the [detailed import notes](README.ru.md#импорт-партитур) for limits and notation-specific behavior.
 
+## Advanced Repertoire
+
+![The Advanced course catalogue, with single melodies, section filters and local MIDI progress.](docs/images/repertoire-course.png)
+
+The **Advanced course** is a separate, freely accessible route after the trainer. Its 31 scores are bundled with the app and work offline in the desktop version. Five sections move from eight single-line melodies through first two-hand pieces, melody with accompaniment, and more demanding coordination. Composers include Türk, Beyer, Czerny, Petzold, Schumann, Burgmüller, and Tchaikovsky.
+
+The main route is intended for the early years of piano study; it is not an accredited grade 1–3 syllabus. The last three pieces, by Satie, Chopin, and Bach, are **optional, harder challenges**. “Advanced” means a continuation of the trainer, not a professional playing level. Beethoven's *Ode to Joy* is a theme arrangement; *Für Elise* includes the A section. The eight single-line songs do not contain a written left-hand accompaniment.
+
+All pieces support **vertical bands → horizontal bands → standard notation**. The vertical teaching window shows four upcoming score positions with durations, rests, accidentals and ties; natural-note positions share the keyboard's coordinates. Altered notes are written at their natural staff position with an accidental. The conventional score retains the edition's fuller engraving, including available fingering, dynamics and phrasing. The teaching window is not a facsimile of that engraving.
+
+MIDI following waits for the required pitch or chord. It checks new attacks, not rhythm, releases, pedal or expression; repeats are not expanded and grace notes are skipped. Completed attempts are saved locally with hand, view, error count and demo status. Course credit requires a complete MIDI pass at 90% or better: right hand for a single-line melody, both hands for a piano piece. The score is attack groups divided by attack groups plus incorrect presses. Demo passes and separate-hand practice remain separate from whole-piece credit. These records are currently separate from the trainer's JSON progress export.
+
+### Sources and Permissions
+
+The MusicXML files come from the [open dacapo repertoire collection](https://github.com/ya-luotao/dacapo/tree/9d22701fb714ed6b3b4e8118f6337965bc54e1a9/scripts/pieces), pinned to an identified revision. Its documented licenses cover 28 MIT-licensed encodings and three CC0 encodings distributed through PDMX. Scores are redistributed unchanged; source editions, encoders and rights notices are preserved. Course ordering and translated display titles are our additions. This is attribution to the supplied sources, not a claim of independent musicological proofreading or universal legal clearance.
+
+Each piece links to its source. [Repertoire notices](public/REPERTOIRE-NOTICES.txt), [full license texts](public/repertoire-licenses), and a [catalogue with SHA-256 hashes](packages/repertoire/catalog.json) accompany the collection. No recordings, artwork or application code from that project are included.
+
 ## Project Status
 
 Sight Reading Bridge is in active development. The current release provides a working adult practice path; the full proposed curriculum is still being developed. Generated exercises are currently single-voice and use natural notes. Ear training, pedal assessment, and a complete rhythm curriculum are not yet included. The introduction animates the staff rotation; lesson presentation controls still switch views directly.
@@ -117,6 +136,7 @@ For browser-only local development, use `npm run dev:renderer`. The development 
 | `packages/curriculum` | Typed lessons and visual support settings |
 | `packages/progress` | Local history and validated progress import |
 | `packages/score-import` | MusicXML/MXL library and score following |
+| `packages/repertoire` | Bundled licensed scores, course ordering and local repertoire records |
 
 ### Verification
 
