@@ -8,7 +8,7 @@
 [![Web MIDI](https://img.shields.io/badge/input-USB%20%C2%B7%20Web%20MIDI-287d68)](#connect-your-piano)
 [![Active development](https://img.shields.io/badge/status-active%20development-d7a33d)](#project-status)
 
-Sight Reading Bridge is an independent piano sight-reading trainer inspired by **Soft Mozart and the Hiner method**. It is being developed as an alternative built around the same educational idea: make the relationship between written notes and piano keys visible, then gradually withdraw that support. Play on your own digital piano, receive feedback locally, and keep the sound of your instrument.
+Sight Reading Bridge is an independent piano sight-reading trainer in active development. It makes the relationship between written notes and piano keys visible, then gradually withdraws that support. Play on your own digital piano, receive feedback locally, and keep the sound of your instrument.
 
 **[Download for desktop](https://github.com/nesfe/Sight-Reading-Bridge/releases/latest)** · **[Русская документация](README.ru.md)**
 
@@ -32,9 +32,9 @@ The first lesson includes an interactive introduction: turn the staff, try C4–
 
 ## Inspiration and Approach
 
-[Soft Mozart's explanation of its teaching notation](https://www.softmozart.com/curriculum/eyenotes-sheet-music.html) describes this visual connection, equal-width lines and spaces, and the gradual return to conventional notation. Our [methodology](docs/source-methodology.md) uses these principles as its starting point.
+[Soft Mozart's publicly available explanation of its teaching notation](https://www.softmozart.com/curriculum/eyenotes-sheet-music.html) was a source of inspiration during the project's design. It describes a visual connection between notes and keys, equal-width lines and spaces, and a gradual return to conventional notation. Our [design methodology](docs/source-methodology.md) sets out the learning goals and planned behavior of Sight Reading Bridge.
 
-Sight Reading Bridge is an independent implementation, not an official Soft Mozart edition or an affiliated product. It has its own interface and generated exercises. The current emphasis is an adult learning path, separate recognition and reading-ahead practice, USB-MIDI feedback, and local progress records; it does not reproduce the complete Soft Mozart course or claim equivalent learning outcomes.
+Sight Reading Bridge is not affiliated with, sponsored by, or endorsed by Soft Mozart or its rights holders. The name is used only to identify this reference, not to describe an official edition or a licensed implementation of its course. The current emphasis is an adult learning path, separate recognition and reading-ahead practice, USB-MIDI feedback, and local progress records. No equivalent or superior learning outcomes are claimed.
 
 Reading a score combines pitch recognition, keyboard navigation, rhythm, and looking ahead. Sight Reading Bridge introduces these demands in stages, giving each skill room to develop.
 

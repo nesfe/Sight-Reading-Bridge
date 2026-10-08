@@ -23,7 +23,7 @@ export const en = {
   'Одна нота в трёх представлениях': 'One note, three views',
   'Сравните положения одной ноты. В первом уроке нет падающих нот и ограничения времени: найдите клавишу, нажмите и отпустите её.': 'Compare the same note in each view. Your first lesson has no falling notes or time limit: find the key, press it, and release it.',
   'Назад': 'Back', 'Повернуть стан': 'Turn the staff', 'К обычной записи': 'Toward standard notation', 'К первому занятию': 'Go to the first lesson',
-  'Этот подход вдохновлён Soft Mozart и методом Хайнер: показать связь ноты с клавишей и постепенно убрать визуальные опоры. Sight Reading Bridge — независимый проект в активной разработке.': 'This approach is inspired by Soft Mozart and the Hiner method: make the connection between notes and keys visible, then gradually remove visual support. Sight Reading Bridge is an independent project in active development.',
+  'Sight Reading Bridge — независимый проект в активной разработке. Один из источников вдохновения — публичные материалы Soft Mozart. Проект не связан с Soft Mozart и не одобрен его правообладателями.': 'Sight Reading Bridge is an independent project in active development. Public materials from Soft Mozart were a source of inspiration. This project is not affiliated with or endorsed by Soft Mozart or its rights holders.',
   'Основная навигация': 'Main navigation',
   'Занятия': 'Lessons', 'Библиотека': 'Library', 'Прогресс': 'Progress', 'Инструмент': 'Instrument',
   'Взрослый маршрут': 'Adult learning path', 'Взрослый маршрут · 01': 'Adult learning path · 01',

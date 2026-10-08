@@ -82,6 +82,6 @@ export function StaffIntro({ onFinish }: { onFinish: () => void }) {
       </div>
     </div>
     <div className="intro-footer"><button disabled={step === 0} onClick={() => { setStep(step - 1); setView(step === 1 ? 'horizontal' : 'vertical'); setHeld([]) }}><ArrowLeft size={17}/>{t('Назад')}</button><button className="primary" onClick={step < 2 ? next : onFinish}>{step === 0 ? <RotateCw size={17}/> : <ArrowRight size={17}/>} {t(step === 0 ? 'Повернуть стан' : step === 1 ? 'К обычной записи' : 'К первому занятию')}</button></div>
-    <p className="intro-credit">{t('Этот подход вдохновлён Soft Mozart и методом Хайнер: показать связь ноты с клавишей и постепенно убрать визуальные опоры. Sight Reading Bridge — независимый проект в активной разработке.')}</p>
+    <p className="intro-credit">{t('Sight Reading Bridge — независимый проект в активной разработке. Один из источников вдохновения — публичные материалы Soft Mozart. Проект не связан с Soft Mozart и не одобрен его правообладателями.')}</p>
   </section>
 }
