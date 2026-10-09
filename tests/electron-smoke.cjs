@@ -33,6 +33,11 @@ async function main() {
     expect(access.sysex).toBe(false)
     if (access.names.length) await expect(page.getByRole('button', { name: 'Начать занятие' })).toBeEnabled()
     else await expect(page.locator('.connection-strip')).toContainText('USB-MIDI устройство не найдено')
+    if (process.platform === 'darwin') {
+      await page.getByLabel('Настройки экрана', { exact: true }).click()
+      await page.getByRole('switch').check()
+      await page.getByLabel('Настройки экрана', { exact: true }).click()
+    }
     await page.getByRole('checkbox').check()
     await page.getByRole('button', { name: 'Начать занятие' }).click()
     await expect(page.getByRole('heading', { name: 'Один звук, два направления' })).toBeVisible()
@@ -41,6 +46,12 @@ async function main() {
     await mkdir('output/playwright', { recursive: true })
     await page.screenshot({ path: 'output/playwright/electron.png' })
     if (process.platform === 'darwin') {
+      await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen())).toBe(true)
+      await expect(page.getByRole('button', { name: 'Выйти из полного экрана', exact: true })).toBeEnabled()
+      await expect(page.locator('.pause-overlay')).toHaveCount(0)
+      await page.getByRole('button', { name: 'Выйти из режима тренировки', exact: true }).click()
+      await expect(page.getByRole('button', { name: 'На весь экран', exact: true })).toBeEnabled()
+      await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen())).toBe(false)
       await page.getByRole('button', { name: 'На весь экран', exact: true }).click()
       await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen())).toBe(true)
       await expect(page.getByRole('button', { name: 'Выйти из полного экрана', exact: true })).toBeEnabled()

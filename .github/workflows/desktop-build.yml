@@ -70,6 +70,12 @@ jobs:
         if: runner.os == 'macOS'
         run: node scripts/verify-mac.cjs
       - uses: actions/upload-artifact@v7.0.1
+        if: always() && runner.os == 'macOS'
+        with:
+          name: desktop-checks-${{ matrix.os }}
+          path: output/playwright/
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v7.0.1
         with:
           name: installers-${{ matrix.os }}
           path: |
