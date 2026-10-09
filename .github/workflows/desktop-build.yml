@@ -39,8 +39,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-latest
-            args: --mac --arm64 --x64
+          - os: macos-15
+            args: --mac --arm64
+          - os: macos-15-intel
+            args: --mac --x64
           - os: windows-latest
             args: --win --x64
           - os: ubuntu-24.04
@@ -64,6 +66,9 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      - name: Verify installed macOS app and native launch
+        if: runner.os == 'macOS'
+        run: node scripts/verify-mac.cjs
       - uses: actions/upload-artifact@v7.0.1
         with:
           name: installers-${{ matrix.os }}

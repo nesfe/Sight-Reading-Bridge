@@ -17,6 +17,7 @@ import { importRecords, read, save, type Record as ProgressRecord } from '../../
 import './App.css'
 import { LessonBlocks, PitchResults } from './RecognitionProgress'
 import { noteCount } from './format'
+import { practiceView } from './practiceView'
 const Library = lazy(() => import('./Library'))
 const Repertoire = lazy(() => import('./Repertoire'))
 
@@ -27,6 +28,7 @@ const handName = { right: 'Правая рука', left: 'Левая рука', 
 
 export default function App() {
   useSyncExternalStore(subscribeLocale, getLocale)
+  const practice = useSyncExternalStore(practiceView.subscribe, practiceView.getSnapshot)
   const [view, setView] = useState<'lessons' | 'repertoire' | 'library' | 'progress' | 'device'>('lessons')
   const [lesson, setLesson] = useState(lessons[0])
   const [scaffold, setScaffold] = useState<Scaffold>(lessons[0].scaffold)
@@ -37,14 +39,15 @@ export default function App() {
   const [introSeen, setIntroSeen] = useState(hasSeenIntro)
   const [history, setHistory] = useState<ProgressRecord[]>([])
   const [storageError, setStorageError] = useState('')
-  const device = useSyncExternalStore(midi.subscribe, midi.getSnapshot)
+  const device = useSyncExternalStore(midi.subscribe, view === 'device' ? midi.getSnapshot : midi.getConnectionSnapshot)
   const importFile = useRef<HTMLInputElement>(null)
   function refreshHistory() { void read().then(setHistory).catch(() => setStorageError('Не удалось прочитать сохранённый прогресс.')) }
   useEffect(() => { refreshHistory() }, [])
   const choose = useCallback((next: Lesson) => { run?.session.pause(performance.now()); setRun(null); setIntro(null); setLesson(next); setScaffold(next.scaffold); setTempo(next.tempo); setView('lessons'); refreshHistory() }, [run])
   const preview = useMemo(() => new Session(generate(lesson, 1), false, tempo), [lesson, tempo])
-  function start(repeat?: Run, bypassIntro = false) {
+  async function start(repeat?: Run, bypassIntro = false) {
     if (lesson.id === lessons[0].id && !repeat && !introSeen && !bypassIntro) { setIntro('start'); return }
+    if (!await practiceView.begin()) return
     run?.session.pause(performance.now())
     const seed = repeat?.seed ?? crypto.getRandomValues(new Uint32Array(1))[0]
     const current = { ...lesson, tempo }
@@ -55,11 +58,11 @@ export default function App() {
     rememberIntro(); setIntroSeen(true); setIntro(null)
     if (intro === 'start' && (demo || device.status === 'ready')) start(undefined, true)
   }
-  function navigate(next: typeof view) { run?.session.pause(performance.now()); setIntro(null); setView(next); refreshHistory() }
+  function navigate(next: typeof view) { run?.session.pause(performance.now()); void practiceView.end(); setIntro(null); setView(next); refreshHistory() }
   const passed = (item: Lesson) => history.some(record => record.lessonId === item.id && record.completed && !record.demo && (item.kind !== 'flash' || hasFullCoverage(record.attempts, item.count)) && (summarize(record.attempts).accuracy ?? 0) >= item.accuracy)
   const done = lessons.filter(passed).length
 
-  return <div className="app-shell">
+  return <div className={`app-shell ${practice.focused ? 'practice-focus' : ''}`}>
     <LanguageControl/>
     <aside className="sidebar">
       <a className="brand" href="#" onClick={e => { e.preventDefault(); navigate('lessons') }}><Piano size={30} /><span>Sight Reading<strong>Bridge</strong></span></a>
@@ -118,13 +121,15 @@ function RunPanel({ run, onBack, onNew, onRepeat, onNext, onAdapt, onSaved }: { 
   const { session, lesson } = run
   const state = useSyncExternalStore(session.subscribe, session.getSnapshot)
   const [storageError, setStorageError] = useState('')
-  const score = summarize(state.attempts)
-  const nextSupport = adapt(run.scaffold, state.attempts, lesson.accuracy)
+  const score = useMemo(() => summarize(state.attempts), [state.attempts])
+  const nextSupport = useMemo(() => adapt(run.scaffold, state.attempts, lesson.accuracy), [run.scaffold, state.attempts, lesson.accuracy])
+  useEffect(() => practiceView.registerPause(() => session.pause(performance.now())), [session])
+  useEffect(() => { if (state.status === 'completed') void practiceView.end() }, [state.status])
   useEffect(() => {
     const start = requestAnimationFrame(now => session.start(now))
     let frame = 0
     const tick = (now: number) => { session.tick(now); frame = requestAnimationFrame(tick) }
-    frame = requestAnimationFrame(tick)
+    if (session.timed) frame = requestAnimationFrame(tick)
     const off = midi.onNote(event => { if (run.demo) return; if (event.type === 'on') session.noteOn(event.midi, event.at); else session.noteOff(event.midi, event.at) })
     const disconnect = midi.onDisconnect(() => session.pause(performance.now()))
     const pause = () => { if (document.hidden) session.pause(performance.now()) }

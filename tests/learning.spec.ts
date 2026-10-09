@@ -127,6 +127,8 @@ test('MusicXML library preserves polyphony, spelling, ties and local MIDI follow
   await expect(page.locator('.imported-score .vf-clef')).toHaveCount(2)
   await page.getByRole('button', { name: 'Подключить MIDI', exact: true }).click()
   await page.getByRole('button', { name: 'Начать чтение', exact: true }).click()
+  // Entering practice changes the available width; wait for the intentional re-layout.
+  await page.waitForTimeout(400)
   await page.locator('.imported-score svg').evaluate(svg => svg.setAttribute('data-original-render', 'yes'))
   await send(page, 0x90, 61); await send(page, 0x80, 61)
   await expect(page.locator('.following-toolbar [role=status]')).toHaveText('Другая нота')
@@ -137,11 +139,11 @@ test('MusicXML library preserves polyphony, spelling, ties and local MIDI follow
   await expect(page.locator('.follow-position')).toHaveText('1 / 5')
   for (const pitch of [48, 60, 64]) await send(page, 0x80, pitch)
   for (const [index, pitch] of [66, 70, 43, 72].entries()) {
+    if (index === 3) await expect(page.locator('.imported-score svg')).toHaveAttribute('data-original-render', 'yes')
     await send(page, 0x90, pitch); await send(page, 0x80, pitch)
     await expect(page.locator('.follow-position')).toHaveText(`${index + 2} / 5`)
   }
   await expect(page.locator('.following-toolbar [role=status]')).toHaveText('Партитура пройдена')
-  await expect(page.locator('.imported-score svg')).toHaveAttribute('data-original-render', 'yes')
   await expect(page.locator('.score-following .session-footer')).toContainText('Ошибки: 1')
   await page.getByRole('radio', { name: 'Полосы', exact: true }).click()
   await page.screenshot({ path: 'output/playwright/import-bands-desktop.png' })

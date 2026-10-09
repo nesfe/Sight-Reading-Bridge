@@ -13,6 +13,10 @@ async function main() {
     const executablePath = process.env.SRB_PACKAGED_EXECUTABLE
     app = await electron.launch({ executablePath, args: [...(executablePath ? [] : ['.']), `--user-data-dir=${profile}`], env })
     const page = await app.firstWindow()
+    if (process.env.SRB_EXPECT_ARCH) {
+      expect(await app.evaluate(() => process.arch)).toBe(process.env.SRB_EXPECT_ARCH)
+      expect(await app.evaluate(({ app }) => app.runningUnderARM64Translation)).not.toBe(true)
+    }
     await page.getByRole('button', { name: 'Русский', exact: true }).click()
     const errors = []
     page.on('pageerror', error => errors.push(error.message))
@@ -36,6 +40,16 @@ async function main() {
     await expect(page.locator('.run-score [data-note-step]')).toHaveCount(1)
     await mkdir('output/playwright', { recursive: true })
     await page.screenshot({ path: 'output/playwright/electron.png' })
+    if (process.platform === 'darwin') {
+      await page.getByRole('button', { name: 'На весь экран', exact: true }).click()
+      await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen())).toBe(true)
+      await expect(page.getByRole('button', { name: 'Выйти из полного экрана', exact: true })).toBeEnabled()
+      await page.getByRole('button', { name: 'Выйти из полного экрана', exact: true }).click()
+      await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen())).toBe(false)
+    } else {
+      await page.getByRole('button', { name: 'Выйти из режима тренировки', exact: true }).click()
+    }
+    await expect(page.locator('.pause-overlay')).toBeVisible()
     await page.getByRole('button', { name: 'Библиотека', exact: true }).click()
     await page.getByLabel('Файл партитуры', { exact: true }).setInputFiles('tests/fixtures/piano.musicxml')
     await expect(page.locator('.imported-score svg')).toHaveCount(1)

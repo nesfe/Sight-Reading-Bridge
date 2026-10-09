@@ -1,24 +1,28 @@
-## 0.6.0 · From Exercises to Music
+## 0.6.1 · Native Mac Builds and Focused Practice
 
-Download an installer below. Apple Silicon Macs, including M4, use `mac-arm64.dmg`. No compilation or developer tools are required. There is no public hosted preview.
+For **Apple Silicon, including M4**, download `Sight-Reading-Bridge-0.6.1-mac-arm64.dmg`. Use `mac-x64.dmg` only on Intel Macs. No compilation or developer tools are required.
 
-### Advanced Course
+### macOS
 
-- 31 bundled MusicXML scores in five sections, available offline in the desktop app.
-- Eight single-line melodies, followed by two-hand pieces by Türk, Beyer, Czerny, Petzold, Schumann, Burgmüller, Tchaikovsky and others.
-- Vertical equal-width bands, horizontal bands, and standard notation for every piece. Natural-note positions and white keys share the same geometry.
-- Right-hand, left-hand and two-hand MIDI practice where the score contains those parts. Switching presentation or interface language preserves the current playing position.
-- Local completed-attempt records and course progress. Screen-keyboard demo passes do not earn MIDI credit.
-- English/Russian titles, search, section filters, source links and individual MusicXML downloads.
+- Separate native ARM64 and Intel builds on macOS Sequoia runners.
+- Explicit ad-hoc signing of the application and its nested Electron components, with the entitlements required by Electron's hardened runtime.
+- Release checks verify the DMG, copy the application out of it, verify its signature, and launch that installed copy. They also check the running architecture, absence of Rosetta translation, MIDI API access, native fullscreen, a trainer lesson, imported MusicXML, and the Advanced course.
 
-### Sources
+**The Mac app is ad-hoc signed, not Developer ID signed or notarized by Apple.** macOS may still require approval in System Settings → Privacy & Security → Open Anyway. Only approve a download whose origin you trust. See [Apple's guidance](https://support.apple.com/en-us/102445). Windows installers remain unsigned.
 
-The collection is taken from the open dacapo repertoire at revision `9d22701fb714ed6b3b4e8118f6337965bc54e1a9`: 28 MIT-licensed encodings and three CC0 encodings via PDMX, according to its source documentation. MusicXML files are unchanged. Source editions, encoder attribution, license texts and SHA-256 hashes are included.
+### Smoother Feedback
 
-### Scope
+- Incoming MIDI notes no longer re-render the app shell or instrument connection controls.
+- Static recognition lessons no longer run an unnecessary frame-by-frame session timer. Held keys and incorrect notes do not re-engrave an unchanged horizontal score.
+- Advanced prepares upcoming vertical notation windows during idle time. Hidden full-score cursors no longer do layout work, and visible cursor updates are coalesced outside the synchronous MIDI callback.
 
-The main route targets the early years of piano study, not an accredited grade 1–3 syllabus. The final three pieces by Satie, Chopin and Bach are optional harder challenges. *Ode to Joy* is a theme arrangement and *Für Elise* is the A section.
+### More Room to Play
 
-Following checks pitch and chord attacks, not rhythm, releases, pedal or expression. Repeats are not expanded; grace notes are skipped. The vertical teaching window shows four positions; the standard score provides the fuller engraving. Arbitrary imported scores still use horizontal views. Advanced records are stored separately from the trainer's JSON export.
+- Starting practice hides navigation and lesson descriptions, giving the score and keyboard more space without changing their alignment.
+- A persistent fullscreen button works in Electron and compatible browsers. A saved switch enables automatic fullscreen on practice start; it is off by default.
+- Leaving the practice view or fullscreen pauses the exercise without resetting the position. Automatically entered fullscreen ends with the exercise; manually entered fullscreen remains under your control.
+- English/Russian selection remains visible during practice.
 
-Desktop installers are unsigned and macOS builds are not notarized. Physical Kawai CA701/M4 key-to-screen latency has not been measured. MIDI processing remains local, with no per-note server request and no software audio.
+The 31-piece Advanced course, lessons and local records remain available. **v0.6.0 is retained as the previous baseline**, without changes to its tag or assets. There is no public hosted preview.
+
+MIDI processing remains local, with no per-note network request or software audio. Automated checks do not measure physical Kawai CA701-to-M4 screen latency or reproduce every Gatekeeper download path; those require testing on the instrument and Mac.

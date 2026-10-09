@@ -10,6 +10,7 @@ import { midi } from '../../../packages/midi-io/src'
 import { teachingFrames, type TeachingFrame } from '../../../packages/score-import/src/teaching'
 import { RepertoireVertical } from '../../../packages/notation-renderer/src/RepertoireVertical'
 import type { CourseRecord } from '../../../packages/repertoire/progress'
+import { practiceView } from './practiceView'
 
 const message = (error: unknown) => error instanceof Error ? error.message : 'Не удалось открыть партитуру.'
 
@@ -88,6 +89,7 @@ export function ScoreDocument({ score, course }: { score: LibraryScore; course?:
   useEffect(() => {
     if (!loaded || !container.current) return
     const host = container.current
+    if (vertical) { loaded.hide(); return }
     const render = () => {
       try {
         loaded.render(zoom, bands)
@@ -134,28 +136,36 @@ export function ScoreDocument({ score, course }: { score: LibraryScore; course?:
 
 function Following({ loaded, follower, warning, demo = false, vertical, onComplete }: { loaded: ScoreDisplayController; follower: ScoreFollower; warning: string; demo?: boolean; vertical?: { frames: TeachingFrame[]; staff: number; staves: number[]; keyboardOnly: boolean }; onComplete?: (errors: number, groups: number) => void }) {
   const state = useSyncExternalStore(follower.subscribe, follower.getSnapshot)
-  const device = useSyncExternalStore(midi.subscribe, midi.getSnapshot)
+  const device = useSyncExternalStore(midi.subscribe, midi.getConnectionSnapshot)
   const completion = useRef(onComplete)
   const saved = useRef(false)
   useEffect(() => { completion.current = onComplete }, [onComplete])
+  useEffect(() => practiceView.registerPause(follower.pause), [follower])
+  useEffect(() => { if (state.status === 'completed' || state.status === 'ready') void practiceView.end() }, [state.status])
   useEffect(() => {
     if (state.status !== 'completed') { saved.current = false; return }
     if (!saved.current) { saved.current = true; completion.current?.(state.errors, follower.groups.length) }
   }, [state.status, state.errors, follower])
   useEffect(() => {
-    const update = () => loaded.move(follower)
-    update()
-    const offChange = follower.subscribe(update)
     const offMidi = midi.onNote(event => { if (demo) return; if (event.type === 'on') follower.noteOn(event.midi); else follower.noteOff(event.midi) })
     const offDisconnect = midi.onDisconnect(follower.pause)
     const hide = () => { if (document.hidden) follower.pause() }
     document.addEventListener('visibilitychange', hide); window.addEventListener('blur', follower.pause)
-    return () => { offChange(); offMidi(); offDisconnect(); document.removeEventListener('visibilitychange', hide); window.removeEventListener('blur', follower.pause); follower.pause() }
+    return () => { offMidi(); offDisconnect(); document.removeEventListener('visibilitychange', hide); window.removeEventListener('blur', follower.pause); follower.pause() }
   }, [loaded, follower, demo])
+  const showCursor = !vertical || vertical.keyboardOnly
+  useEffect(() => {
+    if (!showCursor) { loaded.hide(); return }
+    let frame = 0
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; loaded.move(follower) }) }
+    schedule()
+    const unsubscribe = follower.subscribe(schedule)
+    return () => { unsubscribe(); cancelAnimationFrame(frame) }
+  }, [loaded, follower, showCursor])
   return <div className="score-following">
     {warning && <p className="notice">{t(warning)}</p>}
     <div className="following-toolbar">
-      {device.status !== 'ready' && !demo ? <button onClick={() => void midi.connect()} disabled={device.status === 'connecting'}><Usb size={17}/> {t("Подключить MIDI")}</button> : <button className="primary" disabled={!follower.groups.length || state.status === 'completed'} onClick={() => state.status === 'running' ? follower.pause() : follower.start()}>{state.status === 'running' ? <Pause size={17}/> : <Play size={17}/>} {state.status === 'running' ? t("Приостановить") : state.status === 'paused' ? t("Продолжить") : t("Начать чтение")}</button>}
+      {device.status !== 'ready' && !demo ? <button onClick={() => void midi.connect()} disabled={device.status === 'connecting'}><Usb size={17}/> {t("Подключить MIDI")}</button> : <button className="primary" disabled={!follower.groups.length || state.status === 'completed'} onClick={async () => { if (state.status === 'running') follower.pause(); else if (await practiceView.begin()) follower.start() }}>{state.status === 'running' ? <Pause size={17}/> : <Play size={17}/>} {state.status === 'running' ? t("Приостановить") : state.status === 'paused' ? t("Продолжить") : t("Начать чтение")}</button>}
       <button className="icon-button" title={t("Сначала")} aria-label={t("Сначала")} onClick={follower.reset}><RotateCcw size={17}/></button>
       <span role="status">{t(state.feedback)}</span><span className="follow-position">{state.index} / {follower.groups.length}</span>
     </div>

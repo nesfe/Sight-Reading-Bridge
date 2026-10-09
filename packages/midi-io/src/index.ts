@@ -15,13 +15,19 @@ class MidiInputService {
   private events = new Set<(event: NoteEvent) => void>()
   private disconnected = new Set<() => void>()
   private state: MidiState = { status: 'idle', message: 'Инструмент не подключён', devices: [], selected: '', last: null }
+  private connection = this.state
   readonly dispatchSamples: number[] = []
   readonly frameSamples: number[] = []
   subscribe = (fn: () => void) => { this.listeners.add(fn); return () => { this.listeners.delete(fn) } }
   getSnapshot = () => this.state
+  getConnectionSnapshot = () => this.connection
   onNote(fn: (event: NoteEvent) => void) { this.events.add(fn); return () => { this.events.delete(fn) } }
   onDisconnect(fn: () => void) { this.disconnected.add(fn); return () => { this.disconnected.delete(fn) } }
-  private publish(update: Partial<MidiState>) { this.state = { ...this.state, ...update }; this.listeners.forEach(fn => fn()) }
+  private publish(update: Partial<MidiState>) {
+    this.state = { ...this.state, ...update }
+    if (Object.keys(update).some(key => key !== 'last')) this.connection = this.state
+    this.listeners.forEach(fn => fn())
+  }
   async connect() {
     if (this.state.status === 'connecting') return
     if (!window.isSecureContext || !navigator.requestMIDIAccess) {

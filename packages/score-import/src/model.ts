@@ -4,8 +4,9 @@ import type { PitchGroup, ScoreFollower } from './follow'
 export class ScoreDisplayController {
   readonly display: OpenSheetMusicDisplay
   private position = 0
+  private shown = false
   constructor(display: OpenSheetMusicDisplay) { this.display = display }
-  prepare(part: number, staff: number) { this.position = 0; return followGroups(this.display, part, staff) }
+  prepare(part: number, staff: number) { this.position = 0; this.shown = false; return followGroups(this.display, part, staff) }
   render(zoom: number, bands: boolean) {
     this.display.Zoom = zoom
     this.display.EngravingRules.StaffLineWidth = bands ? 0.5 : 0.1
@@ -13,16 +14,20 @@ export class ScoreDisplayController {
     this.display.render()
     this.position = 0
     this.display.cursor.reset()
+    this.shown = false
   }
+  hide() { if (this.shown) this.display.cursor.hide(); this.shown = false }
   move(follower: ScoreFollower) {
     const state = follower.getSnapshot()
     const cursor = this.display.cursor
     const target = follower.groups[state.index]?.position
-    if (target === undefined || state.status === 'completed') { cursor.hide(); return }
+    if (target === undefined || state.status === 'completed') { this.hide(); return }
     const changed = target !== this.position
+    if (!changed && this.shown) return
     if (target < this.position) { cursor.reset(); this.position = 0 }
     while (this.position < target && !cursor.Iterator.EndReached) { cursor.next(); this.position++ }
     cursor.show()
+    this.shown = true
     if (changed) {
       const scroller = cursor.cursorElement.closest('.imported-score-scroll')
       if (scroller) {

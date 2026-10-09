@@ -1,7 +1,7 @@
 {
   "name": "sight-reading-bridge",
   "private": true,
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Progressive Electron piano sight-reading trainer with Web MIDI support.",
   "author": {
     "name": "nesfe",
@@ -76,6 +76,11 @@
       "output": "release"
     },
     "mac": {
+      "identity": "-",
+      "hardenedRuntime": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "notarize": false,
       "category": "public.app-category.education",
       "target": [
         "dmg",

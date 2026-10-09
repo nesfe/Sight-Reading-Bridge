@@ -1,4 +1,8 @@
 export const en = {
+  'Выйти из режима тренировки': 'Leave practice view', 'Режим тренировки': 'Practice view',
+  'Выйти из полного экрана': 'Exit full screen', 'На весь экран': 'Full screen',
+  'Настройки экрана': 'Screen settings', 'Полный экран при начале занятия': 'Full screen when practice starts',
+  'Полный экран недоступен. Режим тренировки остаётся в окне.': 'Full screen is unavailable. Practice remains in the window.',
   'Курс Advanced': 'Advanced course',
   'Все разделы': 'All sections',
   '01 · Одна мелодия': '01 · A single melody',

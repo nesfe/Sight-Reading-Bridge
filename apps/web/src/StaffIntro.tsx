@@ -18,7 +18,7 @@ export function StaffIntro({ onFinish }: { onFinish: () => void }) {
   const [selected, setSelected] = useState(0)
   const [held, setHeld] = useState<number[]>([])
   const [found, setFound] = useState<number[]>([])
-  const device = useSyncExternalStore(midi.subscribe, midi.getSnapshot)
+  const device = useSyncExternalStore(midi.subscribe, midi.getConnectionSnapshot)
   const heading = useRef<HTMLHeadingElement>(null)
   const interaction = useRef<{ press: (note: number) => void; release: (note: number) => void }>({ press: () => {}, release: () => {} })
   const vertical = view === 'vertical'

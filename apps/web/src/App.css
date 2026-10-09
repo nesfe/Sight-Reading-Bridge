@@ -16,6 +16,15 @@
 .language-options button { width: 82px; min-height: 30px; padding: 4px 8px; border: 0; background: transparent; font-size: 12px; }
 .language-options button[aria-pressed=true] { color: white; background: var(--accent); font-weight: 600; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.practice-controls { display: flex; align-items: center; gap: 6px; margin-right: auto; }
+.practice-options { position: relative; }
+.practice-options summary { width: 36px; height: 36px; display: grid; place-items: center; cursor: pointer; border-radius: 4px; }
+.practice-options summary::-webkit-details-marker { display: none; }
+.practice-options[open] summary { background: #e9f3f1; }
+.practice-options > div { position: absolute; top: 44px; left: 0; width: min(290px, calc(100vw - 110px)); padding: 16px; background: white; border: 1px solid var(--rule); box-shadow: 0 6px 20px #25363718; border-radius: 6px; }
+.practice-options label { display: flex; align-items: center; gap: 10px; font-size: 13px; line-height: 1.5; }
+.practice-options p { font-size: 12px; color: #a13e2d; }
+.practice-options input { flex: 0 0 auto; }
 .course-summary { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 12px 0 28px; border-bottom: 1px solid var(--rule); }
 .course-summary h2 { font-size: 26px; margin: 10px 0; }
 .course-summary p { color: var(--muted); font-size: 14px; }
@@ -167,7 +176,7 @@ progress::-webkit-progress-value { background: #1b8068; }
 .score-scroll { overflow: auto; min-width: 0; }
 .score { display: block; width: 100%; min-width: 630px; max-height: 600px; }
 .run-score > .score-scroll > .score:not(.keyboard-only) { max-height: max(300px, min(600px, calc(100svh - 402px))); }
-.run-view:has(.lesson-blocks) .run-score > .score-scroll > .score:not(.keyboard-only) { max-height: max(260px, min(520px, calc(100svh - 517px))); }
+:where(.app-shell:not(.practice-focus)) .run-view:has(.lesson-blocks) .run-score > .score-scroll > .score:not(.keyboard-only) { max-height: max(260px, min(520px, calc(100svh - 517px))); }
 .staff-line { stroke: #41494d; stroke-width: 1; }
 .ledger-line { stroke: #293a3e; stroke-width: 1.6; }
 .presentation-control { display: flex; gap: 0; margin-bottom: 18px; flex-wrap: wrap; border-bottom: 1px solid var(--rule); }
@@ -288,4 +297,37 @@ th { font-weight: 500; font-size: 12px; color: var(--muted); }
 @media (max-width: 380px) {
   .sidebar { grid-template-columns: 1fr; gap: 8px; }
   .sidebar nav { justify-content: space-between; }
+}
+.app-shell.practice-focus { grid-template-columns: minmax(0, 1fr); grid-template-rows: 52px 1fr; }
+.practice-focus .sidebar, .practice-focus .page-header, .practice-focus .run-view > .lesson-blocks,
+.practice-focus .score-legend, .practice-focus .course-source, .practice-focus .course-navigation { display: none; }
+.practice-focus main { max-width: none; padding: 10px 20px; }
+.practice-focus .run-toolbar h2 { font-size: 18px; }
+.practice-focus .run-progress { margin: 10px 0; }
+.practice-focus .task-row { min-height: 30px; }
+.practice-focus .session-footer { padding: 8px 0; gap: 8px 20px; }
+.practice-focus .run-score > .score-scroll > .score:not(.keyboard-only) { min-width: 0; height: calc(100dvh - 202px); max-height: none; }
+.practice-focus .run-score .score-scroll:has(.standard-score) { height: calc(100dvh - 202px); display: grid; grid-template-rows: minmax(0, 1fr) 22%; }
+.practice-focus .standard-score { min-width: 0; min-height: 0; }
+.practice-focus .standard-score svg, .practice-focus .keyboard-only { height: 100%; min-width: 0; max-height: none; }
+.practice-focus .course-piece-heading { padding-bottom: 6px; gap: 10px; }
+.practice-focus .course-piece-heading h2 { font-size: 18px; margin: 0; }
+.practice-focus .course-piece-heading .eyebrow, .practice-focus .course-piece-heading .muted { display: none; }
+.practice-focus .score-document-toolbar { padding: 6px 0; }
+.practice-focus .score-part-controls { padding: 6px 0; }
+.practice-focus .score-part-controls .check-option { display: none; }
+.practice-focus .repertoire-vertical-scroll { margin-top: 4px; }
+.practice-focus .repertoire-vertical { height: calc(100dvh - 278px); max-height: none; }
+.practice-focus .repertoire-keyboard-only { height: 110px; }
+.practice-focus .imported-score-scroll:not(.course-score-hidden) { max-height: calc(100dvh - 282px); }
+@media (max-width: 600px) {
+  .language-bar { padding-inline: 8px; gap: 8px; }
+  .language-label { display: none; }
+  .practice-controls { gap: 2px; }
+  .practice-controls .icon-button, .practice-options summary { width: 32px; height: 34px; min-height: 34px; }
+  .practice-focus main { padding: 8px; }
+  .practice-focus .run-toolbar { gap: 8px; }
+  .practice-focus .run-toolbar h2 { font-size: 14px; }
+  .practice-focus .run-score > .score-scroll > .score:not(.keyboard-only) { height: calc(100dvh - 238px); width: calc((100dvh - 238px) * 1.741667); min-width: 630px; }
+  .practice-focus .repertoire-vertical { height: calc(100dvh - 330px); }
 }

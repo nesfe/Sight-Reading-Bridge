@@ -68,11 +68,13 @@ Download an installer from [GitHub Releases](https://github.com/nesfe/Sight-Read
 | Windows, x64 | `win-x64.exe` |
 | Linux, x64 | `.AppImage`, `.deb`, or `.rpm` |
 
-Current desktop releases are unsigned, and macOS builds are not notarized. Gatekeeper or SmartScreen may warn or block the first launch.
+Starting with v0.6.1, macOS apps are ad-hoc signed and tested as native ARM64/Intel builds on macOS Sequoia. They are not Developer ID signed or notarized by Apple. macOS may require approval in System Settings → Privacy & Security → Open Anyway; see [Apple's guidance](https://support.apple.com/en-us/102445). Windows installers remain unsigned and SmartScreen may warn on first launch.
 
 There is no public hosted demo. The browser interface remains in the repository for local development and self-hosting. To explore the desktop app without an instrument, enable the on-screen keyboard demo; demo attempts do not count toward course completion.
 
 ### Connect Your Piano
+
+Starting an exercise opens a focused practice view with a larger score and keyboard. The top bar keeps manual fullscreen and language controls visible. Screen settings include a saved **Full screen when practice starts** switch, off by default. Leaving practice pauses without resetting your position. Fullscreen entered automatically ends with the exercise; manually entered fullscreen stays under your control.
 
 Use your instrument's **USB-to-host** connection. Select its MIDI input in the app, then start a lesson. The intended setup uses wired USB MIDI; Bluetooth and microphone input are outside the current scope. Audio comes from your piano, with no software synthesizer in the app.
 
@@ -150,7 +152,7 @@ npm run test:e2e
 
 Browser tests use simulated MIDI. On Linux, the Electron smoke test runs with `xvfb-run -a npm run test:desktop` and requires access to the system MIDI sequencer. Physical instrument latency requires a separate hardware measurement.
 
-GitHub Actions runs checks on `main`. Version tags publish macOS arm64/x64, Windows x64, and Linux x64 installers, along with SHA-256 checksums. Third-party import notices are included in [IMPORT-NOTICES.txt](public/IMPORT-NOTICES.txt).
+GitHub Actions runs checks on `main`. Version tags publish macOS arm64/x64, Windows x64, and Linux x64 installers, along with SHA-256 checksums. Each Mac build is tested on its native Sequoia runner: the DMG is verified, its app is copied out and signature-checked, then launched for architecture, MIDI, fullscreen and practice smoke tests. Third-party import notices are included in [IMPORT-NOTICES.txt](public/IMPORT-NOTICES.txt).
 
 ## Feedback
 

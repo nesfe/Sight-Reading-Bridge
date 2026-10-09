@@ -28,6 +28,9 @@ function createWindow() {
     mainWindow.loadFile(rendererFile)
   }
   mainWindow.webContents.on('will-navigate', (event, url) => { if (!trusted(url)) event.preventDefault() })
+  for (const event of ['enter-full-screen', 'leave-full-screen']) mainWindow.on(event, () => {
+    mainWindow.webContents.send('window:fullscreen', mainWindow.isFullScreen())
+  })
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('https://github.com/nesfe/Sight-Reading-Bridge/')) void shell.openExternal(url)
     return { action: 'deny' }
@@ -45,6 +48,23 @@ app.whenReady().then(() => {
   })
   if (!isDev) session.defaultSession.webRequest.onHeadersReceived((details, callback) => callback({ responseHeaders: { ...details.responseHeaders, 'Content-Security-Policy': ["default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'"] } }))
   ipcMain.handle('app:get-version', () => app.getVersion())
+  const ownWindow = event => {
+    if (event.senderFrame !== event.sender.mainFrame || !trusted(event.senderFrame.url)) throw new Error('Untrusted window request')
+    return BrowserWindow.fromWebContents(event.sender)
+  }
+  ipcMain.handle('window:get-fullscreen', event => ownWindow(event).isFullScreen())
+  ipcMain.handle('window:set-fullscreen', async (event, value) => {
+    const window = ownWindow(event)
+    if (typeof value !== 'boolean') throw new Error('Invalid fullscreen value')
+    if (window.isFullScreen() === value) return value
+    return new Promise(resolve => {
+      const name = value ? 'enter-full-screen' : 'leave-full-screen'
+      const finish = () => { clearTimeout(timer); window.removeListener(name, finish); resolve(!window.isDestroyed() && window.isFullScreen()) }
+      const timer = setTimeout(finish, 5000)
+      window.once(name, finish)
+      window.setFullScreen(value)
+    })
+  })
   createWindow()
 
   app.on('activate', () => {
