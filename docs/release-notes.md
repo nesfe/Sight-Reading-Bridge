@@ -1,6 +1,6 @@
-## 0.6.1 · Native Mac Builds and Focused Practice
+## 0.6.2 · Native Mac Builds and Focused Practice
 
-For **Apple Silicon, including M4**, download `Sight-Reading-Bridge-0.6.1-mac-arm64.dmg`. Use `mac-x64.dmg` only on Intel Macs. No compilation or developer tools are required.
+For **Apple Silicon, including M4**, download `Sight-Reading-Bridge-0.6.2-mac-arm64.dmg`. Use `mac-x64.dmg` only on Intel Macs. No compilation or developer tools are required.
 
 ### macOS
 
@@ -24,5 +24,7 @@ For **Apple Silicon, including M4**, download `Sight-Reading-Bridge-0.6.1-mac-ar
 - English/Russian selection remains visible during practice.
 
 The 31-piece Advanced course, lessons and local records remain available. **v0.6.0 is retained as the previous baseline**, without changes to its tag or assets. There is no public hosted preview.
+
+The v0.6.1 tag did not produce a published release: its Mac smoke test sent the first Advanced chord before the asynchronous fullscreen transition completed. This release explicitly waits for practice readiness and retains failure diagnostics.
 
 MIDI processing remains local, with no per-note network request or software audio. Automated checks do not measure physical Kawai CA701-to-M4 screen latency or reproduce every Gatekeeper download path; those require testing on the instrument and Mac.

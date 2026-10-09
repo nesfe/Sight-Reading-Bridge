@@ -73,6 +73,9 @@ async function main() {
     await expect(page.locator('.repertoire-vertical .vf-notehead').first()).toBeVisible()
     await page.getByRole('checkbox').check()
     await page.getByRole('button', { name: 'Start reading', exact: true }).click()
+    // The click returns before macOS finishes its asynchronous fullscreen transition.
+    await expect(page.locator('.following-toolbar [role=status]')).toHaveText('Waiting for a note')
+    await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible()
     await page.locator('.repertoire-vertical [data-midi="72"]').focus()
     await page.keyboard.down('Enter')
     await page.locator('.repertoire-vertical [data-midi="60"]').press('Space')
@@ -84,6 +87,14 @@ async function main() {
     await page.screenshot({ path: 'output/playwright/electron-repertoire.png' })
     expect(errors).toEqual([])
     console.log('Electron: file://, isolation, Web MIDI, lesson, MusicXML and bundled Advanced course OK')
+  } catch (error) {
+    const page = app?.windows()[0]
+    if (page && !page.isClosed()) {
+      await mkdir('output/playwright', { recursive: true })
+      await page.screenshot({ path: 'output/playwright/electron-failure.png' }).catch(() => {})
+      console.error(await page.locator('body').innerText().catch(() => 'Unable to read renderer state'))
+    }
+    throw error
   } finally {
     await app?.close()
     await rm(profile, { recursive: true, force: true })

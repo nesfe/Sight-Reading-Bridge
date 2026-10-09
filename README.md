@@ -68,7 +68,7 @@ Download an installer from [GitHub Releases](https://github.com/nesfe/Sight-Read
 | Windows, x64 | `win-x64.exe` |
 | Linux, x64 | `.AppImage`, `.deb`, or `.rpm` |
 
-Starting with v0.6.1, macOS apps are ad-hoc signed and tested as native ARM64/Intel builds on macOS Sequoia. They are not Developer ID signed or notarized by Apple. macOS may require approval in System Settings → Privacy & Security → Open Anyway; see [Apple's guidance](https://support.apple.com/en-us/102445). Windows installers remain unsigned and SmartScreen may warn on first launch.
+Starting with v0.6.2, macOS apps are ad-hoc signed and tested as native ARM64/Intel builds on macOS Sequoia. They are not Developer ID signed or notarized by Apple. macOS may require approval in System Settings → Privacy & Security → Open Anyway; see [Apple's guidance](https://support.apple.com/en-us/102445). Windows installers remain unsigned and SmartScreen may warn on first launch.
 
 There is no public hosted demo. The browser interface remains in the repository for local development and self-hosting. To explore the desktop app without an instrument, enable the on-screen keyboard demo; demo attempts do not count toward course completion.
 
